@@ -80,7 +80,8 @@ const CONCURSANTES = {
       "luise &",
       'TEAMÑAÑO',
       'Ñaño',
-      "Ñañitoo"
+      "Ñañitoo",
+      'Louise'
     ]
   },
   GIGI: {
