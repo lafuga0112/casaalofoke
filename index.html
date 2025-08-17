@@ -199,7 +199,10 @@
     <!-- Script para actualizar puntuaciones en tiempo real -->
     <script>
         // Conexión WebSocket
-        const socket = io();
+const socket = io({
+    transports: ['websocket', 'polling'],
+    path: '/socket.io'
+});
         
         // Variables globales
         let isConnected = false;
