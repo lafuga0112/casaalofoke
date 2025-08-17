@@ -1757,11 +1757,47 @@ body::after {
     font-weight: 600;
     color: #ffffff;
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .superchat-contestants.sin-clasificar {
     color: #ff6b6b;
     font-style: italic;
+}
+
+/* Imágenes de participantes en SuperChats */
+.contestants-images {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.contestant-mini-img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    object-fit: cover;
+    transition: all 0.2s ease;
+}
+
+.contestant-mini-img:hover {
+    transform: scale(1.2);
+    border-color: #ff0000;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
+}
+
+/* Para múltiples participantes, hacer las imágenes un poco más pequeñas */
+.contestants-images.multiple .contestant-mini-img {
+    width: 18px;
+    height: 18px;
+}
+
+/* Texto de participantes */
+.contestants-text {
+    font-size: 0.75rem;
 }
 
 .superchat-time {

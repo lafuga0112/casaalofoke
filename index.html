@@ -477,15 +477,62 @@
             return 'tier-1';                           // $1-4 - Azul
         }
 
-        // Función para formatear texto de concursantes
-        function formatContestantsText(concursantes, puntosDistribuidos) {
+        // Mapeo de nombres de concursantes a imágenes
+        const contestantImages = {
+            'GIGI': 'images/gigi.jpg',
+            'GIUSEPPE': 'images/GIUSEPPE.jpg',
+            'VLADY': 'images/vlady.jpg',
+            'CRAZY': 'images/CRAZY.jpg',
+            'PAMELA': 'images/pamela.jpg',
+            'KAROLA': 'images/karola.jpg',
+            'JIMENEZ': 'images/JIMENEZ.jpg',
+            'PEKY': 'images/peki.jpg',
+            'CRUSITA': 'images/CRUSITA.jpg',
+            'LUISE': 'images/luise.jpg'
+        };
+
+        // Función para generar HTML de imágenes de concursantes
+        function generateContestantImages(concursantes) {
             if (concursantes.includes("SIN CLASIFICAR")) {
-                return `→ Todos los participantes (${puntosDistribuidos} pts c/u)`;
+                // Para "SIN CLASIFICAR", mostrar todas las imágenes en miniatura
+                const allImages = Object.keys(contestantImages).map(name => {
+                    return `<img src="${contestantImages[name]}" alt="${name}" class="contestant-mini-img" title="${name}">`;
+                }).join('');
+                return `<div class="contestants-images multiple">${allImages}</div>`;
+            } else {
+                // Para concursantes específicos
+                const images = concursantes.map(name => {
+                    const imageSrc = contestantImages[name];
+                    if (imageSrc) {
+                        return `<img src="${imageSrc}" alt="${name}" class="contestant-mini-img" title="${name}">`;
+                    }
+                    return '';
+                }).filter(img => img).join('');
+                
+                const multipleClass = concursantes.length > 1 ? 'multiple' : '';
+                return `<div class="contestants-images ${multipleClass}">${images}</div>`;
+            }
+        }
+
+        // Función para formatear texto de concursantes con imágenes
+        function formatContestantsText(concursantes, puntosDistribuidos, distribucion) {
+            const images = generateContestantImages(concursantes);
+            
+            let text = '';
+            if (concursantes.includes("SIN CLASIFICAR")) {
+                // Verificar si no se asignaron puntos por monto muy bajo
+                if (distribucion && distribucion.includes("mínimo $10 requerido")) {
+                    text = `Todos los participantes (0 pts - monto insuficiente)`;
+                } else {
+                    text = `Todos los participantes (${puntosDistribuidos} pts c/u)`;
+                }
             } else {
                 const participantes = concursantes.join(', ');
                 const puntosCadaUno = concursantes.length > 1 ? ` (${puntosDistribuidos} pts c/u)` : ` (${puntosDistribuidos} pts)`;
-                return `→ ${participantes}${puntosCadaUno}`;
+                text = `${participantes}${puntosCadaUno}`;
             }
+            
+            return `${images}<span class="contestants-text">${text}</span>`;
         }
 
         // Función para agregar SuperChat
@@ -513,7 +560,7 @@
             const tierClass = getTierClass(superChatData.montoUSD);
             
             // Formatear texto de concursantes
-            const contestantsText = formatContestantsText(superChatData.concursantes, superChatData.puntosDistribuidos);
+            const contestantsText = formatContestantsText(superChatData.concursantes, superChatData.puntosDistribuidos, superChatData.distribucion);
             const contestantsClass = superChatData.concursantes.includes("SIN CLASIFICAR") ? 'sin-clasificar' : '';
             
             // Mostrar conversión de moneda si es diferente

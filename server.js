@@ -68,9 +68,14 @@ function detectarConcursantes(mensaje) {
     const mensajeLower = mensaje.toLowerCase();
     const concursantesDetectados = [];
     
+    console.log(`🔍 [DEBUG] Mensaje original: "${mensaje}"`);
+    console.log(`🔍 [DEBUG] Mensaje en lowercase: "${mensajeLower}"`);
+    
     for (const [key, concursante] of Object.entries(CONCURSANTES)) {
         for (const keyword of concursante.keywords) {
-            if (mensajeLower.includes(keyword.toLowerCase())) {
+            const keywordLower = keyword.toLowerCase();
+            if (mensajeLower.includes(keywordLower)) {
+                console.log(`✅ [DEBUG] ENCONTRADO: "${keywordLower}" en "${mensajeLower}" → ${concursante.nombre}`);
                 if (!concursantesDetectados.includes(concursante.nombre)) {
                     concursantesDetectados.push(concursante.nombre);
                 }
@@ -78,6 +83,8 @@ function detectarConcursantes(mensaje) {
             }
         }
     }
+    
+    console.log(`🎯 [DEBUG] Concursantes detectados: ${concursantesDetectados.length > 0 ? concursantesDetectados.join(', ') : 'NINGUNO'}`);
     
     if (concursantesDetectados.length === 0) {
         return ["SIN CLASIFICAR"];
@@ -89,7 +96,13 @@ function detectarConcursantes(mensaje) {
 async function distribuirPuntos(concursantes, puntosUSD) {
     try {
         if (concursantes.includes("SIN CLASIFICAR")) {
-            const puntosPorConcursante = Math.round(puntosUSD / 10);
+            // Si no llega a $10, no se distribuye nada
+            if (puntosUSD < 10) {
+                console.log(`⚠️ [PRODUCCIÓN] SuperChat de $${puntosUSD} muy pequeño para distribuir entre 10 participantes. No se asignan puntos.`);
+                return `SuperChat de $${puntosUSD} muy pequeño para distribuir entre todos los participantes (mínimo $10 requerido)`;
+            }
+            
+            const puntosPorConcursante = Math.floor(puntosUSD / 10);
             
             // Actualizar todos los concursantes
             for (const [key, concursante] of Object.entries(CONCURSANTES)) {
