@@ -56,7 +56,7 @@
         <section class="contestants-panel">
             <div class="contestants-grid">
                 <!-- LA GIGI -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 0;">
                     <div class="contestant-name">LA GIGI</div>
                     <div class="contestant-photo">
                         <img src="images/gigi.jpg" alt="LA GIGI" class="profile-img" onclick="openContestantProfile('gigi')">
@@ -65,7 +65,7 @@
                 </div>
 
                 <!-- GIUSEPPE/TRUJILLO -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 1;">
                     <div class="contestant-name">GIUSEPPE</div>
                     <div class="contestant-photo">
                         <img src="images/GIUSEPPE.jpg" alt="GIUSEPPE" class="profile-img" onclick="openContestantProfile('giuseppe')">
@@ -74,7 +74,7 @@
                 </div>
 
                 <!-- VLADY -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 2;">
                     <div class="contestant-name">VLADY</div>
                     <div class="contestant-photo">
                         <img src="images/vlady.jpg" alt="VLADY" class="profile-img" onclick="openContestantProfile('vlady')">
@@ -83,7 +83,7 @@
                 </div>
 
                 <!-- CRAZY -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 3;">
                     <div class="contestant-name">CRAZY</div>
                     <div class="contestant-photo">
                         <img src="images/CRAZY.jpg" alt="CRAZY" class="profile-img" onclick="openContestantProfile('crazy')">
@@ -92,7 +92,7 @@
                 </div>
 
                 <!-- Pamela -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 4;">
                     <div class="contestant-name">PAMELA</div>
                     <div class="contestant-photo">
                         <img src="images/pamela.jpg" alt="PAMELA" class="profile-img" onclick="openContestantProfile('pamela')">
@@ -101,7 +101,7 @@
                 </div>
 
                 <!-- KAROLA -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 5;">
                     <div class="contestant-name">KAROLA</div>
                     <div class="contestant-photo">
                         <img src="images/karola.jpg" alt="KAROLA" class="profile-img" onclick="openContestantProfile('karola')">
@@ -110,7 +110,7 @@
                 </div>
 
                 <!-- JIMENEZ -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 6;">
                     <div class="contestant-name">JIMENEZ</div>
                     <div class="contestant-photo">
                         <img src="images/JIMENEZ.jpg" alt="JIMENEZ" class="profile-img" onclick="openContestantProfile('jimenez')">
@@ -119,7 +119,7 @@
                 </div>
 
                 <!-- LA PEKI -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 7;">
                     <div class="contestant-name">LA PEKI</div>
                     <div class="contestant-photo">
                         <img src="images/peki.jpg" alt="LA PEKI" class="profile-img" onclick="openContestantProfile('peki')">
@@ -128,7 +128,7 @@
                 </div>
 
                 <!-- CRUSITA -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 8;">
                     <div class="contestant-name">CRUSITA</div>
                     <div class="contestant-photo">
                         <img src="images/CRUSITA.jpg" alt="CRUSITA" class="profile-img" onclick="openContestantProfile('crusita')">
@@ -137,7 +137,7 @@
                 </div>
 
                 <!-- LUISE -->
-                <div class="contestant-card">
+                <div class="contestant-card" style="--card-index: 9;">
                     <div class="contestant-name">LUISE</div>
                     <div class="contestant-photo">
                         <img src="images/luise.jpg" alt="LUISE" class="profile-img" onclick="openContestantProfile('luise')">
@@ -159,6 +159,17 @@
                     <div class="legend-item">
                         <span class="legend-label">Última actualización:</span>
                         <span class="legend-value" id="last-update">--:-- --</span>
+                    </div>
+                </div>
+                
+                <!-- Información sobre distribución de puntos -->
+                <div class="legend-content distribution-info">
+                    <div class="legend-item">
+                        <span class="legend-label">¿Cómo se reparten los puntos?</span>
+                        <span class="legend-value">
+                            Cuando un SuperChat menciona a varios concursantes en un mismo mensaje, los puntos se dividen equitativamente entre ellos.
+                            Por ejemplo, si un SuperChat de $10 menciona a GIUSEPPE y VLADY, cada uno recibe 5 puntos.
+                        </span>
                     </div>
                 </div>
                 
