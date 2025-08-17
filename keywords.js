@@ -61,7 +61,8 @@ const CONCURSANTES = {
       "crusita,",
       "crusita &",
       "Team Crucita",
-      'Cruzita'
+      'Cruzita',
+      'CRUCITAAAA'
     ]
   },
   LUISE: {
