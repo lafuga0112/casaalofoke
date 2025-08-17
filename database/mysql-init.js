@@ -49,6 +49,67 @@ ALTER DATABASE ${config.database.database} CHARACTER SET utf8mb4 COLLATE utf8mb4
 let pool;
 let initialized = false;
 
+async function createChatAprendizajeTable() {
+    const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS chat_completo_aprendizaje (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            tipo_mensaje ENUM('superchat', 'mensaje', 'membership', 'sticker', 'otro') NOT NULL,
+            mensaje TEXT,
+            autor VARCHAR(100),
+            monto_usd DECIMAL(10,2) DEFAULT 0,
+            moneda_original VARCHAR(10) DEFAULT NULL,
+            monto_original DECIMAL(10,2) DEFAULT NULL,
+            concursante_detectado VARCHAR(50) DEFAULT NULL,
+            confianza_deteccion INT DEFAULT 0,
+            metodo_deteccion VARCHAR(50) DEFAULT NULL,
+            timestamp DATETIME DEFAULT NOW(),
+            procesado_aprendizaje BOOLEAN DEFAULT FALSE,
+            
+            INDEX idx_timestamp (timestamp),
+            INDEX idx_procesado (procesado_aprendizaje),
+            INDEX idx_tipo (tipo_mensaje),
+            INDEX idx_concursante (concursante_detectado),
+            INDEX idx_autor (autor)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+    
+    try {
+        await pool.query(createTableSQL);
+        console.log('✅ Tabla chat_completo_aprendizaje creada correctamente');
+    } catch (error) {
+        console.error('❌ Error creando tabla chat_completo_aprendizaje:', error.message);
+        throw error;
+    }
+}
+
+async function createSugerenciasKeywordsTable() {
+    const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS sugerencias_keywords (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            palabra_encontrada VARCHAR(100) NOT NULL,
+            concursante_sugerido VARCHAR(50) NOT NULL,
+            similitud_porcentaje DECIMAL(5,2) NOT NULL,
+            frecuencia_aparicion INT DEFAULT 1,
+            estado ENUM('pendiente', 'aprobada', 'rechazada') DEFAULT 'pendiente',
+            primera_deteccion DATETIME DEFAULT NOW(),
+            ultima_actualizacion DATETIME DEFAULT NOW() ON UPDATE NOW(),
+            
+            UNIQUE KEY unique_palabra_concursante (palabra_encontrada, concursante_sugerido),
+            INDEX idx_estado (estado),
+            INDEX idx_concursante (concursante_sugerido),
+            INDEX idx_frecuencia (frecuencia_aparicion)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+    
+    try {
+        await pool.query(createTableSQL);
+        console.log('✅ Tabla sugerencias_keywords creada correctamente');
+    } catch (error) {
+        console.error('❌ Error creando tabla sugerencias_keywords:', error.message);
+        throw error;
+    }
+}
+
 // Inicializar la base de datos
 async function initializeDatabase() {
     try {
@@ -71,6 +132,8 @@ async function initializeDatabase() {
         // Crear tablas
         await pool.query(createConcursantesTable);
         await pool.query(createApiKeysTable);
+        await createChatAprendizajeTable();
+        await createSugerenciasKeywordsTable();
         
         console.log('✅ Tablas creadas exitosamente');
         

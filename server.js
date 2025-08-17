@@ -11,6 +11,7 @@ const db = require('./database/mysql-init');
 // Importar funciones del monitor de Super Chats
 const { CONCURSANTES } = require('./keywords.js');
 const { cargarTasasConversionAlInicio, convertirAUSD } = require('./conversiones.js');
+const aprendizaje = require('./aprendizaje-automatico');
 
 // Importar el módulo de la API de YouTube
 const youtubeApi = require('./youtube-api');
@@ -61,18 +62,21 @@ io.on('connection', (socket) => {
 // Funciones del monitor de Super Chats
 // convertirAUSD ahora se importa desde conversiones.js
 
+// ========================================
+// SISTEMA DE DETECCIÓN MEJORADO
+// ========================================
+
 function detectarConcursantes(mensaje) {
     const mensajeLower = mensaje.toLowerCase();
     const concursantesDetectados = [];
     
-    console.log(`🔍 [DEBUG] Mensaje original: "${mensaje}"`);
-    console.log(`🔍 [DEBUG] Mensaje en lowercase: "${mensajeLower}"`);
+    console.log(`🔍 [DETECCIÓN] Mensaje: "${mensaje}"`);
     
     for (const [key, concursante] of Object.entries(CONCURSANTES)) {
         for (const keyword of concursante.keywords) {
             const keywordLower = keyword.toLowerCase();
             if (mensajeLower.includes(keywordLower)) {
-                console.log(`✅ [DEBUG] ENCONTRADO: "${keywordLower}" en "${mensajeLower}" → ${concursante.nombre}`);
+                console.log(`✅ [DETECCIÓN] ENCONTRADO: "${keywordLower}" → ${concursante.nombre}`);
                 if (!concursantesDetectados.includes(concursante.nombre)) {
                     concursantesDetectados.push(concursante.nombre);
                 }
@@ -81,13 +85,124 @@ function detectarConcursantes(mensaje) {
         }
     }
     
-    console.log(`🎯 [DEBUG] Concursantes detectados: ${concursantesDetectados.length > 0 ? concursantesDetectados.join(', ') : 'NINGUNO'}`);
+    console.log(`🎯 [DETECCIÓN] Concursantes detectados: ${concursantesDetectados.length > 0 ? concursantesDetectados.join(', ') : 'NINGUNO'}`);
     
     if (concursantesDetectados.length === 0) {
         return ["SIN CLASIFICAR"];
     }
     
     return concursantesDetectados;
+}
+
+// ========================================
+// PROCESAMIENTO COMPLETO DEL CHAT
+// ========================================
+
+function extraerMensajeDeItem(item) {
+    const snippet = item.snippet;
+    
+    switch (snippet.type) {
+        case 'textMessageDetails':
+            return {
+                tipo: 'mensaje',
+                mensaje: snippet.textMessageDetails.messageText,
+                autor: snippet.authorDetails.displayName,
+                montoUSD: 0
+            };
+        case 'superChatDetails':
+            return {
+                tipo: 'superchat',
+                mensaje: snippet.superChatDetails.userComment || '',
+                autor: snippet.authorDetails.displayName,
+                montoUSD: snippet.superChatDetails.amountMicros / 1000000,
+                monedaOriginal: snippet.superChatDetails.currency,
+                montoOriginal: snippet.superChatDetails.amountMicros / 1000000
+            };
+        case 'memberMilestoneChatDetails':
+            return {
+                tipo: 'membership',
+                mensaje: snippet.memberMilestoneChatDetails.userComment || `Miembro por ${snippet.memberMilestoneChatDetails.memberMonth} meses`,
+                autor: snippet.authorDetails.displayName,
+                montoUSD: 0
+            };
+        case 'newSponsorDetails':
+            return {
+                tipo: 'membership',
+                mensaje: 'Nuevo miembro del canal',
+                autor: snippet.authorDetails.displayName,
+                montoUSD: 0
+            };
+        default:
+            return {
+                tipo: 'otro',
+                mensaje: snippet.displayMessage || '',
+                autor: snippet.authorDetails?.displayName || 'Usuario',
+                montoUSD: 0
+            };
+    }
+}
+
+async function procesarMensajeCompleto(mensajeData) {
+    try {
+        // Detectar concursantes en TODOS los mensajes
+        const concursantesDetectados = detectarConcursantes(mensajeData.mensaje);
+        const hayDeteccion = !concursantesDetectados.includes("SIN CLASIFICAR");
+        
+        // Preparar datos para guardar en aprendizaje
+        const datosAprendizaje = {
+            tipo: mensajeData.tipo,
+            mensaje: mensajeData.mensaje,
+            autor: mensajeData.autor,
+            montoUSD: mensajeData.montoUSD || 0,
+            monedaOriginal: mensajeData.monedaOriginal || null,
+            montoOriginal: mensajeData.montoOriginal || null,
+            concursanteDetectado: hayDeteccion ? concursantesDetectados.join(',') : null,
+            confianzaDeteccion: hayDeteccion ? 100 : 0,
+            metodoDeteccion: hayDeteccion ? 'KEYWORDS_EXACTAS' : null
+        };
+        
+        // Guardar TODOS los mensajes para aprendizaje
+        await aprendizaje.guardarMensajeParaAprendizaje(db, datosAprendizaje);
+        
+        // Solo procesar puntos para SuperChats
+        if (mensajeData.tipo === 'superchat' && mensajeData.montoUSD > 0) {
+            console.log(`💸 [SUPERCHAT] ${mensajeData.autor}: ${mensajeData.montoOriginal} ${mensajeData.monedaOriginal} - "${mensajeData.mensaje}"`);
+            
+            // Convertir a USD si es necesario
+            let montoUSD = mensajeData.montoUSD;
+            if (mensajeData.monedaOriginal !== 'USD') {
+                montoUSD = Math.round(convertirAUSD(mensajeData.montoOriginal, mensajeData.monedaOriginal));
+                console.log(`💵 [CONVERSIÓN] ${mensajeData.montoOriginal} ${mensajeData.monedaOriginal} = $${montoUSD} USD`);
+            }
+            
+            // Distribuir puntos
+            const distribucion = await distribuirPuntos(concursantesDetectados, montoUSD);
+            
+            // Crear objeto para enviar al frontend
+            const superChatParaEnviar = {
+                id: Date.now(),
+                author: mensajeData.autor,
+                message: mensajeData.mensaje,
+                amount: montoUSD,
+                currency: 'USD',
+                originalAmount: mensajeData.montoOriginal,
+                originalCurrency: mensajeData.monedaOriginal,
+                contestants: hayDeteccion ? concursantesDetectados : [],
+                distribucion: distribucion,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Enviar a todos los clientes conectados
+            io.emit('nuevo-superchat', superChatParaEnviar);
+            
+            // Enviar puntuaciones actualizadas
+            enviarPuntuacionesActualizadas();
+            console.log(`✅ [PRODUCCIÓN] Puntuaciones actualizadas y enviadas a todos los clientes`);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error procesando mensaje completo:', error.message);
+    }
 }
 
 async function distribuirPuntos(concursantes, puntosUSD) {
@@ -487,64 +602,10 @@ async function iniciarMonitorSuperChats() {
             try {
                 const data = await youtubeApi.pollChat(liveChatId, nextPageToken);
                 
-                // Contar cuántos SuperChats hay en los mensajes recibidos
-                const superChatsCount = data.items?.filter(item => item.snippet?.superChatDetails).length || 0;
-                
-                if (superChatsCount > 0) {
-                    console.log(`💰 SuperChats detectados: ${superChatsCount}`);
-                }
-
+                // Procesar cada mensaje recibido
                 for (const item of data.items || []) {
-                    const author = item.authorDetails?.displayName || "Desconocido";
-                    const snippet = item.snippet;
-
-                    if (snippet?.superChatDetails) {
-                        const sc = snippet.superChatDetails;
-                        const montoOriginal = Number(sc.amountMicros || 0) / 1_000_000;
-                        const moneda = sc.currency || "";
-                        const msg = sc.userComment || "";
-                        
-                        console.log(`💸 SuperChat de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
-                        
-                        const concursantes = detectarConcursantes(msg);
-                        console.log(`👥 Concursantes detectados: ${concursantes.join(', ') || 'Ninguno'}`);
-                        
-                        const montoUSD = Math.round(convertirAUSD(montoOriginal, moneda));
-                        console.log(`💵 Monto en USD: $${montoUSD}`);
-                        
-                        try {
-                            // Solo distribuir puntos - no guardar nada más
-                        const distribucion = await distribuirPuntos(concursantes, montoUSD);
-                        console.log(`📊 Distribución de puntos: ${distribucion}`);
-                            
-                            // Calcular puntos realmente distribuidos
-                            const puntosDistribuidos = concursantes.includes("SIN CLASIFICAR") ? 
-                                Math.round(montoUSD / 10) : Math.round(montoUSD / concursantes.length);
-                            
-                            // Enviar SuperChat via WebSocket para visualización
-                            const superChatParaEnviar = {
-                                id: Date.now(),
-                                autor: author,
-                                mensaje: msg,
-                                montoOriginal: montoOriginal,
-                                moneda: moneda,
-                                montoUSD: montoUSD,
-                                puntosDistribuidos: puntosDistribuidos,
-                                concursantes: concursantes,
-                                distribucion: distribucion,
-                                timestamp: new Date().toISOString()
-                            };
-                            
-                            io.emit('nuevo-superchat', superChatParaEnviar);
-                            
-                            // Enviar puntuaciones actualizadas a todos los clientes
-                            enviarPuntuacionesActualizadas();
-                            console.log(`✅ [PRODUCCIÓN] Puntuaciones actualizadas y enviadas a todos los clientes`);
-                            
-                        } catch (err) {
-                            console.error('❌ Error procesando SuperChat:', err.message);
-                        }
-                    }
+                    const mensajeData = extraerMensajeDeItem(item);
+                    await procesarMensajeCompleto(mensajeData);
                 }
 
                 nextPageToken = data.nextPageToken;
@@ -590,6 +651,10 @@ async function startServer() {
             
             // Iniciar el sistema de reintento automático de API keys
             youtubeApi.iniciarSistemaReintento();
+            
+            // Iniciar el sistema de aprendizaje automático
+            console.log('🧠 Iniciando sistema de aprendizaje automático...');
+            const intervaloAprendizaje = aprendizaje.iniciarSistemaAprendizaje(db);
             
             // Iniciar monitor de Super Chats automáticamente solo si hay API keys válidas
             if (apiKeysValidas) {
