@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LA CASA - Alofoke Reality Show</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header Principal -->
+    <header class="header">
+        <div class="header-content">
+            <div class="day-indicator">
+                <div class="day-circle">
+                    <span class="day-number">4</span>
+                </div>
+                <span class="day-text">DIA</span>
+            </div>
+            
+            <div class="social-header">
+                <div class="social-message">
+                    <span class="social-message-text">Disfruta del Reality en los canales oficiales</span>
+                </div>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/casaalofoke/" target="_blank" class="social-header-link instagram">
+                        <img src="images/ig.webp" alt="Instagram" class="social-header-icon">
+                        <span class="social-header-text">@alofokeradioshow</span>
+                    </a>
+                    <a href="https://www.youtube.com/watch?app=desktop&v=gOJvu0xYsdo&fbclid=PAZXh0bgNhZW0CMTEAAaeucH45DPPbuwn5_nzesxOrArvYTOJWZbaATMYH-nwcS3XmuLiTHjP4lZ8EFg_aem_fzVrWP8OPCdZxhL7yXspLg" target="_blank" class="social-header-link youtube">
+                        <img src="images/yt.png" alt="YouTube" class="social-header-icon">
+                        <span class="social-header-text">Alofoke Radio Show</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="main-container">
+        <!-- Panel de Concursantes -->
+        <section class="contestants-panel">
+            <div class="contestants-grid">
+                <!-- LA GIGI -->
+                <div class="contestant-card">
+                    <div class="contestant-name">LA GIGI</div>
+                    <div class="contestant-photo">
+                        <img src="images/gigi.jpg" alt="LA GIGI" class="profile-img" onclick="openContestantProfile('gigi')">
+                    </div>
+                    <div class="contestant-score" id="score-gigi">0PTS</div>
+                </div>
+
+                <!-- GIUSEPPE -->
+                <div class="contestant-card">
+                    <div class="contestant-name">GIUSEPPE</div>
+                    <div class="contestant-photo">
+                        <img src="images/GIUSEPPE.jpg" alt="GIUSEPPE" class="profile-img" onclick="openContestantProfile('giuseppe')">
+                    </div>
+                    <div class="contestant-score" id="score-giuseppe">0PTS</div>
+                </div>
+
+                <!-- VLADY -->
+                <div class="contestant-card">
+                    <div class="contestant-name">VLADY</div>
+                    <div class="contestant-photo">
+                        <img src="images/vlady.jpg" alt="VLADY" class="profile-img" onclick="openContestantProfile('vlady')">
+                    </div>
+                    <div class="contestant-score" id="score-vlady">0PTS</div>
+                </div>
+
+                <!-- CRAZY -->
+                <div class="contestant-card">
+                    <div class="contestant-name">CRAZY</div>
+                    <div class="contestant-photo">
+                        <img src="images/crazy.jpg" alt="CRAZY" class="profile-img" onclick="openContestantProfile('crazy')">
+                    </div>
+                    <div class="contestant-score" id="score-crazy">0PTS</div>
+                </div>
+
+                <!-- Pamela -->
+                <div class="contestant-card">
+                    <div class="contestant-name">Pamela</div>
+                    <div class="contestant-photo">
+                        <img src="images/pamela.jpg" alt="Pamela" class="profile-img" onclick="openContestantProfile('pamela')">
+                    </div>
+                    <div class="contestant-score" id="score-pamela">0PTS</div>
+                </div>
+
+                <!-- KAROLA -->
+                <div class="contestant-card">
+                    <div class="contestant-name">KAROLA</div>
+                    <div class="contestant-photo">
+                        <img src="images/karola.jpg" alt="KAROLA" class="profile-img" onclick="openContestantProfile('karola')">
+                    </div>
+                    <div class="contestant-score" id="score-karola">0PTS</div>
+                </div>
+
+                <!-- JIMENEZ -->
+                <div class="contestant-card">
+                    <div class="contestant-name">JIMENEZ</div>
+                    <div class="contestant-photo">
+                        <img src="images/jimenez.jpg" alt="JIMENEZ" class="profile-img" onclick="openContestantProfile('jimenez')">
+                    </div>
+                    <div class="contestant-score" id="score-jiménez">0PTS</div>
+                </div>
+
+                <!-- LA PEKI -->
+                <div class="contestant-card">
+                    <div class="contestant-name">LA PEKI</div>
+                    <div class="contestant-photo">
+                        <img src="images/peki.jpg" alt="LA PEKI" class="profile-img" onclick="openContestantProfile('peki')">
+                    </div>
+                    <div class="contestant-score" id="score-peky">0PTS</div>
+                </div>
+
+                <!-- CRUSITA -->
+                <div class="contestant-card">
+                    <div class="contestant-name">CRUSITA</div>
+                    <div class="contestant-photo">
+                        <img src="images/crusita.jpg" alt="CRUSITA" class="profile-img" onclick="openContestantProfile('crusita')">
+                    </div>
+                    <div class="contestant-score" id="score-crusita">0PTS</div>
+                </div>
+
+                <!-- LUISE -->
+                <div class="contestant-card">
+                    <div class="contestant-name">LUISE</div>
+                    <div class="contestant-photo">
+                        <img src="images/luise.jpg" alt="LUISE" class="profile-img" onclick="openContestantProfile('luise')">
+                    </div>
+                    <div class="contestant-score" id="score-luise">0PTS</div>
+                </div>
+
+                <!-- GIUSEPPE -->
+                <div class="contestant-card">
+                    <div class="contestant-name">GIUSEPPE</div>
+                    <div class="contestant-photo">
+                        <img src="images/GIUSEPPE.jpg" alt="GIUSEPPE" class="profile-img" onclick="openContestantProfile('giuseppe')">
+                    </div>
+                    <div class="contestant-score" id="score-giuseppe">0PTS</div>
+                </div>
+
+                <!-- TRUJILLO -->
+                <div class="contestant-card">
+                    <div class="contestant-name">Giusepe</div>
+                    <div class="contestant-photo">
+                        <img src="images/giuseppe.jpg" alt="TRUJILLO" class="profile-img" onclick="openContestantProfile('trujillo')">
+                    </div>
+                    <div class="contestant-score" id="score-trujillo">0PTS</div>
+                </div>
+            </div>
+            
+            <!-- Leyenda del Sistema de Puntuación -->
+            <div class="scoring-legend">
+                <div class="legend-header">
+                    <h3>INFORMACIÓN DEL SISTEMA DE PUNTUACIÓN</h3>
+                </div>
+                <div class="legend-content">
+                    <div class="legend-item">
+                        <span class="legend-label">Contabilización desde:</span>
+                        <span class="legend-value">12 de Agosto, 2025 - 8:00 PM</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-label">Última actualización:</span>
+                        <span class="legend-value" id="last-update">--:-- --</span>
+                    </div>
+                </div>
+                
+                <!-- Disclaimer Legal -->
+                <div class="disclaimer">
+                    <div class="disclaimer-content">
+                        <span class="disclaimer-text">
+                            <strong>IMPORTANTE:</strong> Este sistema de puntuación NO es un conteo oficial de parte de la empresa Alofoke. 
+                            Fue creado por un fan como herramienta informativa y de entretenimiento. 
+                            Los resultados pueden no reflejar la puntuación real del reality show.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel de Chat en Tiempo Real -->
+        <section class="chat-panel">
+            <div class="chat-header"> 
+                <h2>PUNTOS EN TIEMPO REAL</h2>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Los mensajes del chat se cargarán dinámicamente aquí -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Socket.IO Client -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Script para actualizar puntuaciones en tiempo real -->
+    <script>
+        // Conexión WebSocket
+        const socket = io();
+        
+        // Variables globales
+        let isConnected = false;
+        // Función para solicitar puntuaciones via WebSocket
+        function requestScores() {
+            if (isConnected) {
+                socket.emit('get-puntuaciones');
+                console.log('📡 Solicitando puntuaciones via WebSocket');
+            } else {
+                console.log('❌ WebSocket no conectado, no se pueden obtener puntuaciones');
+            }
+        }
+
+        // Función para mostrar mensajes del chat
+        function addChatMessage(message) {
+            const chatContainer = document.getElementById('chatMessages');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            messageElement.innerHTML = `
+                <span class="message-author">${message.author}</span>
+                <span class="message-text">${message.text}</span>
+                <span class="message-time">${message.time}</span>
+            `;
+            chatContainer.appendChild(messageElement);
+            
+            // Auto-scroll al último mensaje
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Links de Instagram de los concursantes
+        const instagramLinks = {
+            gigi: 'https://www.instagram.com/lagigird/',
+            giuseppe: 'https://www.instagram.com/gbenignini/', // Ejemplo - ajustar con el real
+            vlady: 'hhttps://www.instagram.com/justvladyg/', // Ejemplo - ajustar con el real
+            crazy: 'https://www.instagram.com/crazydesignrd/', // Ejemplo - ajustar con el real
+            pamela: 'https://www.instagram.com/shuupamela6.9/', // Ejemplo - ajustar con el real
+            karola: 'https://www.instagram.com/karolalcendra_/', // Ejemplo - ajustar con el real
+            jimenez: 'https://www.instagram.com/jimenez_tv/', // Ejemplo - ajustar con el real
+            peki: 'https://www.instagram.com/lapekipr/', // Ejemplo - ajustar con el real
+            crusita: 'https://www.instagram.com/crusita___/', // Ejemplo - ajustar con el real
+            luise: 'https://www.instagram.com/luisemartinezz12/' // Ejemplo - ajustar con el real
+        };
+
+        // Función para abrir Instagram del concursante
+        function openContestantProfile(contestantId) {
+            const instagramUrl = instagramLinks[contestantId];
+            if (instagramUrl) {
+                window.open(instagramUrl, '_blank');
+            } else {
+                alert('Instagram del concursante no disponible aún');
+            }
+        }
+
+        // Función para reordenar concursantes según puntuación
+        function reorderContestants(concursantes) {
+            const container = document.querySelector('.contestants-grid');
+            const cards = Array.from(container.children);
+            
+            // Crear un mapa de las cards actuales por slug
+            const cardMap = {};
+            cards.forEach(card => {
+                const scoreElement = card.querySelector('.contestant-score');
+                const id = scoreElement.id;
+                if (id && id.startsWith('score-')) {
+                    const slug = id.replace('score-', '');
+                    cardMap[slug] = card;
+                }
+            });
+            
+            // Reordenar según la nueva data
+            container.innerHTML = '';
+            concursantes.forEach(concursante => {
+                const card = cardMap[concursante.slug];
+                if (card) {
+                    container.appendChild(card);
+                } else {
+                    console.warn(`No se encontró card para: ${concursante.slug}`);
+                }
+            });
+        }
+
+        // Función para actualizar la hora de última actualización
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const options = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+                timeZone: 'America/Santo_Domingo'
+            };
+            
+            const timeString = now.toLocaleTimeString('es-DO', options);
+            const dateString = now.toLocaleDateString('es-DO', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                timeZone: 'America/Santo_Domingo'
+            });
+            
+            document.getElementById('last-update').textContent = `${dateString} - ${timeString}`;
+        }
+
+        // WebSocket Event Listeners
+        socket.on('connect', () => {
+            isConnected = true;
+            console.log('🔌 Conectado al servidor WebSocket');
+            // Solicitar puntuaciones iniciales al conectar
+            requestScores();
+        });
+        
+        socket.on('disconnect', () => {
+            isConnected = false;
+            console.log('🔌 Desconectado del servidor WebSocket');
+        });
+        
+        socket.on('nuevo-superchat', (superChat) => {
+            console.log('💥 Nuevo Super Chat recibido:', superChat);
+            mostrarSuperChatEnChat(superChat);
+            // Animar las cards de los concursantes que recibieron puntos
+            animarConcursantesQueRecibieronPuntos(superChat.puntosAsignados);
+        });
+        
+        socket.on('puntuaciones-update', (data) => {
+            console.log('📊 Puntuaciones actualizadas via WebSocket');
+            if (data.success) {
+                reorderContestants(data.data);
+                data.data.forEach((concursante) => {
+                    const scoreElement = document.getElementById(`score-${concursante.slug}`);
+                    if (scoreElement) {
+                        scoreElement.textContent = `${Math.round(concursante.puntos_reales)}PTS`;
+                    }
+                });
+            }
+        });
+        
+        socket.on('estadisticas-update', (stats) => {
+            console.log('📈 Estadísticas actualizadas via WebSocket');
+            actualizarEstadisticasPanel(stats);
+        });
+        
+        socket.on('dia-actualizado', (info) => {
+            console.log('📅 Día del reality actualizado:', info);
+            actualizarDiaEnHeader(info.diaActual, info.titulo);
+        });
+        
+        socket.on('monitor-status', (status) => {
+            console.log('📊 Estado del monitor:', status);
+            if (status.diaActual) {
+                actualizarDiaEnHeader(status.diaActual, status.tituloVideo);
+            }
+        });
+        
+        // Función para mostrar Super Chat en el panel de chat
+        function mostrarSuperChatEnChat(superChat) {
+            const chatContainer = document.getElementById('chatMessages');
+            if (!chatContainer) return;
+            
+            const messageElement = document.createElement('div');
+            
+            // Determinar la clase según el monto USD
+            let tierClass = 'tier-low';
+            if (superChat.montoUSD >= 100) {
+                tierClass = 'tier-ultra';
+            } else if (superChat.montoUSD >= 50) {
+                tierClass = 'tier-high';
+            } else if (superChat.montoUSD >= 20) {
+                tierClass = 'tier-medium';
+            }
+            
+            messageElement.className = `super-chat-message ${tierClass}`;
+            
+            // Determinar texto de concursantes y puntos
+            let concursantesTexto;
+            let puntosPorConcursante;
+            
+            if (superChat.concursantes.includes('SIN CLASIFICAR')) {
+                // Para SIN CLASIFICAR: puntos se dividen entre 10 participantes
+                puntosPorConcursante = Math.round(superChat.montoUSD / 10);
+                concursantesTexto = 'Todos los participantes';
+            } else {
+                // Para concursantes específicos
+                puntosPorConcursante = Math.round(superChat.montoUSD / superChat.concursantes.length);
+                concursantesTexto = superChat.concursantes.join(' + ');
+            }
+            
+            messageElement.innerHTML = `
+                <div class="super-chat-header">
+                    <span class="super-chat-author">${superChat.autor}</span>
+                    <span class="super-chat-amount">${superChat.montoOriginal} ${superChat.moneda} (${superChat.montoUSD} USD)</span>
+                </div>
+                <div class="super-chat-message-text">"${superChat.mensaje}"</div>
+                <div class="super-chat-points">
+                    <span class="points-info">${concursantesTexto} +${puntosPorConcursante}PTS</span>
+                    <span class="super-chat-time">${new Date(superChat.timestamp).toLocaleTimeString('es-DO')}</span>
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Limitar a los últimos 50 mensajes
+            const messages = chatContainer.children;
+            if (messages.length > 50) {
+                chatContainer.removeChild(messages[0]);
+            }
+        }
+        
+        // Función para actualizar estadísticas del panel
+        function actualizarEstadisticasPanel(stats) {
+            // Ya no hay footer que actualizar, las estadísticas se manejan solo por WebSocket
+            console.log('📈 Estadísticas recibidas:', stats);
+        }
+        
+        // Función para actualizar el día en el header
+        function actualizarDiaEnHeader(dia, titulo) {
+            const dayNumberElement = document.querySelector('.day-number');
+            const dayTextElement = document.querySelector('.day-text');
+            
+            if (dayNumberElement) {
+                // Animación de cambio
+                dayNumberElement.style.transform = 'scale(1.2)';
+                dayNumberElement.style.color = '#FFD700';
+                
+                setTimeout(() => {
+                    dayNumberElement.textContent = dia;
+                    setTimeout(() => {
+                        dayNumberElement.style.transform = 'scale(1)';
+                        dayNumberElement.style.color = '#ffffff';
+                    }, 200);
+                }, 100);
+            }
+            
+            // Opcional: actualizar el título en la consola para debug
+            if (titulo) {
+                console.log(`🎬 Título del video: "${titulo}"`);
+            }
+            
+            // Notificación eliminada - solo actualiza silenciosamente
+        }
+        
+
+        
+        // Función para animar concursantes que recibieron puntos
+        function animarConcursantesQueRecibieronPuntos(concursantesNombres) {
+            concursantesNombres.forEach(nombreConcursante => {
+                // Buscar la card por el nombre del concursante
+                const cards = document.querySelectorAll('.contestant-card');
+                cards.forEach(card => {
+                    const nombreElement = card.querySelector('.contestant-name');
+                    if (nombreElement && nombreElement.textContent.trim() === nombreConcursante) {
+                        // Animar la card
+                        card.classList.add('points-received');
+                        
+                        // Remover la animación después de que termine
+                        setTimeout(() => {
+                            card.classList.remove('points-received');
+                        }, 1000);
+                    }
+                });
+            });
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLastUpdateTime(); // Actualizar hora inmediatamente
+            
+            // Actualizar hora cada 30 segundos (solo la hora, los datos vienen por WebSocket)
+            setInterval(() => {
+                updateLastUpdateTime();
+            }, 30000);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,800 @@
+/* Reset y configuración base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Rajdhani', sans-serif;
+    background: linear-gradient(135deg, #1a0000 0%, #330000 50%, #1a0000 100%);
+    background-attachment: fixed;
+    color: white;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Fondo con texto decorativo */
+body::before {
+    content: "DE ÚLTIMO MINUTO...había una vez una casa roja.";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    font-size: 2rem;
+    color: rgba(255, 0, 0, 0.1);
+    font-weight: 300;
+    white-space: nowrap;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Header Principal */
+.header {
+    background: linear-gradient(180deg, #000000 0%, #1a0000 100%);
+    padding: 20px 0;
+    border-bottom: 3px solid #ff0000;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    padding: 0 20px;
+}
+
+/* Indicador de Día */
+.day-indicator {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.day-circle {
+    width: 80px;
+    height: 80px;
+    border: 4px solid #333;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1a1a1a, #000000);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 
+        inset 0 0 20px rgba(255, 0, 0, 0.2),
+        0 0 20px rgba(255, 0, 0, 0.3);
+}
+
+.day-circle::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid #ff0000;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.day-number {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #ff0000;
+    text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+}
+
+.day-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Redes Sociales Header */
+.social-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.social-message {
+    text-align: center;
+}
+
+.social-message-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #cccccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.social-links {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.social-header-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: rgba(255, 0, 0, 0.1);
+    border: 2px solid rgba(255, 0, 0, 0.3);
+    border-radius: 25px;
+    text-decoration: none;
+    color: white;
+    transition: all 0.3s ease;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+}
+
+.social-header-link:hover {
+    background: rgba(255, 0, 0, 0.3);
+    border-color: #ff0000;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(255, 0, 0, 0.4);
+}
+
+.social-header-link:hover .social-header-icon {
+    transform: scale(1.1);
+}
+
+.social-header-link.instagram:hover {
+    background: rgba(225, 48, 108, 0.3);
+    border-color: #e1306c;
+    box-shadow: 0 5px 20px rgba(225, 48, 108, 0.4);
+}
+
+.social-header-link.youtube:hover {
+    background: rgba(255, 0, 0, 0.3);
+    border-color: #ff0000;
+    box-shadow: 0 5px 20px rgba(255, 0, 0, 0.4);
+}
+
+.social-header-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    transition: all 0.3s ease;
+}
+
+.social-header-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+}
+
+/* Contenedor Principal */
+.main-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 40px;
+}
+
+/* Panel de Concursantes */
+.contestants-panel {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #ff0000;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 
+        0 0 50px rgba(255, 0, 0, 0.3),
+        inset 0 0 30px rgba(255, 0, 0, 0.1);
+}
+
+.contestants-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    /* Perspectiva 3D para el contenedor */
+    perspective: 1500px;
+    perspective-origin: center center;
+}
+
+/* Tarjetas de Concursantes (Pastillas) con Efecto 3D */
+.contestant-card {
+    background: linear-gradient(145deg, #000000, #1a1a1a);
+    border: 2px solid #ff0000;
+    border-radius: 25px;
+    padding: 15px 10px;
+    text-align: center;
+    position: relative;
+    transition: all 0.4s ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    /* Efectos 3D */
+    transform-style: preserve-3d;
+    transform: perspective(1000px) rotateX(8deg) rotateY(5deg);
+    box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.6),
+        0 8px 15px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(255, 0, 0, 0.3),
+        inset 0 2px 5px rgba(255, 255, 255, 0.1),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.contestant-card:hover {
+    transform: perspective(1000px) rotateX(12deg) rotateY(8deg) translateY(-10px) scale(1.05);
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.8),
+        0 15px 25px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(255, 0, 0, 0.6),
+        inset 0 3px 8px rgba(255, 255, 255, 0.2),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.4);
+    border-color: #ff3333;
+}
+
+/* Animación cuando el concursante recibe puntos */
+.contestant-card.points-received {
+    animation: pointsReceived 1s ease-in-out;
+    transform: perspective(1000px) rotateX(15deg) rotateY(10deg) scale(1.15) translateY(-15px);
+    box-shadow: 
+        0 30px 60px rgba(0, 0, 0, 0.9),
+        0 20px 30px rgba(0, 0, 0, 0.7),
+        0 0 50px rgba(255, 215, 0, 0.9),
+        0 0 100px rgba(255, 215, 0, 0.6),
+        inset 0 5px 15px rgba(255, 255, 255, 0.3),
+        inset 0 -5px 15px rgba(0, 0, 0, 0.5);
+    border-color: #FFD700;
+    background: linear-gradient(145deg, #1a1a1a, #000000, rgba(255, 215, 0, 0.1));
+}
+
+@keyframes pointsReceived {
+    0% { 
+        transform: perspective(1000px) rotateX(8deg) rotateY(5deg) scale(1);
+        box-shadow: 
+            0 15px 35px rgba(0, 0, 0, 0.6),
+            0 0 20px rgba(255, 0, 0, 0.3),
+            inset 0 2px 5px rgba(255, 255, 255, 0.1);
+    }
+    25% {
+        transform: perspective(1000px) rotateX(20deg) rotateY(15deg) scale(1.2) translateY(-20px);
+        box-shadow: 
+            0 40px 80px rgba(0, 0, 0, 1),
+            0 0 80px rgba(255, 215, 0, 1),
+            0 0 120px rgba(255, 215, 0, 0.8),
+            inset 0 8px 20px rgba(255, 255, 255, 0.4);
+    }
+    50% { 
+        transform: perspective(1000px) rotateX(12deg) rotateY(8deg) scale(1.15) translateY(-10px);
+        box-shadow: 
+            0 35px 70px rgba(0, 0, 0, 0.9),
+            0 0 60px rgba(255, 215, 0, 1),
+            0 0 100px rgba(255, 215, 0, 0.7),
+            inset 0 6px 15px rgba(255, 255, 255, 0.3);
+    }
+    100% { 
+        transform: perspective(1000px) rotateX(15deg) rotateY(10deg) scale(1.15) translateY(-15px);
+        box-shadow: 
+            0 30px 60px rgba(0, 0, 0, 0.9),
+            0 0 50px rgba(255, 215, 0, 0.9),
+            0 0 100px rgba(255, 215, 0, 0.6),
+            inset 0 5px 15px rgba(255, 255, 255, 0.3);
+    }
+}
+
+.contestant-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.contestant-photo {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    align-items: center;
+}
+
+.profile-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid #ff0000;
+    object-fit: cover;
+    box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.4),
+        0 0 25px rgba(255, 0, 0, 0.6),
+        inset 0 2px 5px rgba(255, 255, 255, 0.2);
+    transition: all 0.4s ease;
+    cursor: pointer;
+    transform: translateZ(20px);
+}
+
+.profile-img:hover {
+    transform: translateZ(30px) scale(1.1);
+    box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(255, 0, 0, 0.8),
+        inset 0 3px 8px rgba(255, 255, 255, 0.3);
+    border-color: #ff3333;
+}
+
+.contestant-score {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+
+
+/* Leyenda del Sistema de Puntuación */
+.scoring-legend {
+    background: rgba(255, 0, 0, 0.05);
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 25px;
+}
+
+.legend-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.legend-header h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ff0000;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.legend-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.legend-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ff0000;
+}
+
+.legend-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #cccccc;
+    line-height: 1.4;
+}
+
+/* Disclaimer Legal */
+.disclaimer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.disclaimer-content {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    border-left: 4px solid #ffffff;
+}
+
+.disclaimer-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #ffffff;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.disclaimer-text strong {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* Panel de Chat */
+.chat-panel {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #ff0000;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 
+        0 0 50px rgba(255, 0, 0, 0.3),
+        inset 0 0 30px rgba(255, 0, 0, 0.1);
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ff0000;
+}
+
+.chat-header h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.viewers-count {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.viewers-icon {
+    font-size: 1.5rem;
+}
+
+.viewers-number {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ff0000;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+.viewers-text {
+    font-size: 0.7rem;
+    color: #cccccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.chat-container {
+    height: calc(100vh - 300px); /* Usar la altura disponible menos el header y padding */
+    min-height: 500px;
+    margin-bottom: 20px;
+}
+
+.chat-messages {
+    height: 100%;
+    overflow-y: auto;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.chat-message {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 8px;
+    background: rgba(255, 0, 0, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid #ff0000;
+}
+
+.message-author {
+    font-weight: 600;
+    color: #ff0000;
+    min-width: 80px;
+}
+
+.message-text {
+    color: white;
+    flex: 1;
+}
+
+.message-time {
+    color: #cccccc;
+    font-size: 0.8rem;
+    min-width: 60px;
+}
+
+/* Estilos para Super Chats */
+.super-chat-message {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    animation: superChatGlow 0.5s ease-in-out;
+    transition: all 0.3s ease;
+}
+
+/* Tiers de Super Chat según monto */
+.super-chat-message.tier-low {
+    border: 2px solid #4CAF50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.super-chat-message.tier-medium {
+    border: 3px solid #FF9800;
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
+}
+
+.super-chat-message.tier-high {
+    border: 4px solid #E91E63;
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.5);
+}
+
+.super-chat-message.tier-ultra {
+    border: 5px solid #9C27B0;
+    box-shadow: 0 0 25px rgba(156, 39, 176, 0.6);
+    background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(0, 0, 0, 0.8));
+}
+
+@keyframes superChatGlow {
+    0% { 
+        transform: scale(0.95); 
+        opacity: 0; 
+    }
+    100% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+}
+
+.super-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.super-chat-author {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.super-chat-amount {
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 0.85rem;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.super-chat-message-text {
+    color: #ffffff;
+    font-style: italic;
+    margin: 8px 0;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.super-chat-points {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 0.8rem;
+}
+
+.points-info {
+    color: #ff0000;
+    font-weight: bold;
+    background: rgba(255, 0, 0, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.super-chat-time {
+    color: #888888;
+    font-size: 0.7rem;
+}
+
+
+
+/* Scrollbar personalizado */
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: rgba(255, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #ff0000;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #cc0000;
+}
+
+
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .contestants-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+    
+    .legend-content {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .chat-container {
+        height: calc(100vh - 250px);
+        min-height: 400px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+    
+    .day-circle {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .day-number {
+        font-size: 2rem;
+    }
+    
+    .social-header {
+        gap: 12px;
+    }
+    
+    .social-message-text {
+        font-size: 0.9rem;
+    }
+    
+    .social-links {
+        gap: 15px;
+    }
+    
+    .social-header-link {
+        padding: 8px 15px;
+    }
+    
+    .social-header-text {
+        font-size: 0.9rem;
+    }
+    
+    .social-header-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .profile-img {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .contestants-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .contestant-card {
+        padding: 10px 8px;
+        min-height: 180px;
+    }
+    
+    .profile-img {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .contestant-name {
+        font-size: 0.7rem;
+    }
+    
+    .contestant-score {
+        font-size: 0.9rem;
+    }
+    
+    /* Redes sociales responsive */
+    .social-header {
+        gap: 10px;
+    }
+    
+    .social-message-text {
+        font-size: 0.8rem;
+    }
+    
+    .social-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .social-header-link {
+        padding: 6px 12px;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .social-header-text {
+        font-size: 0.8rem;
+    }
+    
+    .social-header-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .scoring-legend {
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    .legend-header h3 {
+        font-size: 0.9rem;
+    }
+    
+    .legend-label {
+        font-size: 0.8rem;
+    }
+    
+    .legend-value {
+        font-size: 0.75rem;
+    }
+    
+    .disclaimer-content {
+        padding: 12px;
+        text-align: center;
+    }
+    
+    .disclaimer-text {
+        font-size: 0.75rem;
+    }
+} 
