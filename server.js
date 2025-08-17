@@ -4,7 +4,9 @@ const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 const config = require('./config');
-const { getDatabase } = require('./database/init');
+
+// Importar el módulo de base de datos MySQL
+const db = require('./database/mysql-init');
 
 // Importar funciones del monitor de Super Chats
 const { CONCURSANTES } = require('./keywords.js');
@@ -58,37 +60,38 @@ io.on('connection', (socket) => {
 
 // Función para obtener y enviar estadísticas via socket
 async function obtenerEstadisticasParaSocket(socket) {
-    const db = getDatabase();
-    
-    const query = `
-        SELECT 
-            e.*,
-            s.autor as ultimo_autor,
-            s.mensaje as ultimo_mensaje,
-            s.monto_usd as ultimo_monto_usd,
-            s.timestamp as ultimo_timestamp
-        FROM estadisticas e
-        LEFT JOIN superchats s ON e.ultimo_superchat_id = s.id
-        WHERE e.id = 1
-    `;
-    
-    db.get(query, [], (err, row) => {
-        db.close();
-        if (!err && row) {
+    try {
+        const query = `
+            SELECT 
+                e.*,
+                s.autor as ultimo_autor,
+                s.mensaje as ultimo_mensaje,
+                s.monto_usd as ultimo_monto_usd,
+                s.timestamp as ultimo_timestamp
+            FROM estadisticas e
+            LEFT JOIN superchats s ON e.ultimo_superchat_id = s.id
+            WHERE e.id = 1
+        `;
+        
+        const row = await db.query(query);
+        
+        if (row && row.length > 0) {
             socket.emit('estadisticas-update', {
-                totalSuperChats: row.total_superchats || 0,
-                totalPuntosReales: row.total_puntos_reales || 0,
-                totalPuntosMostrados: row.total_puntos_mostrados || 0,
-                ultimoSuperChat: row.ultimo_autor ? {
-                    autor: row.ultimo_autor,
-                    mensaje: row.ultimo_mensaje,
-                    montoUSD: row.ultimo_monto_usd,
-                    timestamp: row.ultimo_timestamp
+                totalSuperChats: row[0].total_superchats || 0,
+                totalPuntosReales: row[0].total_puntos_reales || 0,
+                totalPuntosMostrados: row[0].total_puntos_mostrados || 0,
+                ultimoSuperChat: row[0].ultimo_autor ? {
+                    autor: row[0].ultimo_autor,
+                    mensaje: row[0].ultimo_mensaje,
+                    montoUSD: row[0].ultimo_monto_usd,
+                    timestamp: row[0].ultimo_timestamp
                 } : null,
                 timestamp: new Date().toISOString()
             });
         }
-    });
+    } catch (err) {
+        console.error('❌ Error obteniendo estadísticas:', err.message);
+    }
 }
 
 // Funciones del monitor de Super Chats
@@ -120,146 +123,89 @@ function detectarConcursantes(mensaje) {
 }
 
 async function distribuirPuntos(concursantes, puntosUSD) {
-    return new Promise((resolve, reject) => {
-        const db = getDatabase();
-        
+    try {
         if (concursantes.includes("SIN CLASIFICAR")) {
             const puntosPorConcursante = Math.round(puntosUSD / 10);
             
-            // Actualizar directamente en la base de datos
-            const updateStmt = db.prepare(`
-                UPDATE concursantes 
-                SET puntos_reales = puntos_reales + ?,
-                    updated_at = datetime('now')
-                WHERE nombre = ?
-            `);
-            
-            Object.values(CONCURSANTES).forEach((concursante) => {
-                updateStmt.run(
-                    puntosPorConcursante, 
-                    concursante.nombre
+            // Actualizar todos los concursantes
+            for (const [key, concursante] of Object.entries(CONCURSANTES)) {
+                await db.query(
+                    `UPDATE concursantes 
+                    SET puntos_reales = puntos_reales + ?,
+                        updated_at = NOW()
+                    WHERE nombre = ?`,
+                    [puntosPorConcursante, concursante.nombre]
                 );
-            });
+            }
             
-            updateStmt.finalize((err) => {
-                db.close();
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(`Distribuido entre los 10 concursantes (${puntosPorConcursante} puntos cada uno)`);
-                }
-            });
+            return `Distribuido entre los 10 concursantes (${puntosPorConcursante} puntos cada uno)`;
             
         } else {
             const puntosPorConcursante = Math.round(puntosUSD / concursantes.length);
             
-            // Actualizar directamente en la base de datos
-            const updateStmt = db.prepare(`
-                UPDATE concursantes 
-                SET puntos_reales = puntos_reales + ?,
-                    updated_at = datetime('now')
-                WHERE nombre = ?
-            `);
-            
-            concursantes.forEach((nombreConcursante) => {
-                updateStmt.run(
-                    puntosPorConcursante, 
-                    nombreConcursante
+            // Actualizar solo los concursantes mencionados
+            for (const nombreConcursante of concursantes) {
+                await db.query(
+                    `UPDATE concursantes 
+                    SET puntos_reales = puntos_reales + ?,
+                        updated_at = NOW()
+                    WHERE nombre = ?`,
+                    [puntosPorConcursante, nombreConcursante]
                 );
-            });
+            }
             
-            updateStmt.finalize((err) => {
-                db.close();
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(`Distribuido entre ${concursantes.length} concursante(s) (${puntosPorConcursante} puntos cada uno)`);
-                }
-            });
+            return `Distribuido entre ${concursantes.length} concursante(s) (${puntosPorConcursante} puntos cada uno)`;
         }
-    });
+    } catch (err) {
+        console.error('❌ Error distribuyendo puntos:', err.message);
+        throw err;
+    }
 }
 
 
 
 async function guardarSuperChatBD(superChatData) {
-    return new Promise((resolve, reject) => {
-        const db = getDatabase();
-        
-        db.serialize(() => {
-            const insertSuperChat = db.prepare(`
-                INSERT INTO superchats 
-                (autor, mensaje, monto_original, moneda, monto_usd, concursantes_detectados, distribucion)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            `);
-            
-            insertSuperChat.run(
+    try {
+        // Insertar el superchat
+        const result = await db.query(
+            `INSERT INTO superchats 
+            (autor, mensaje, monto_original, moneda, monto_usd, concursantes_detectados, distribucion)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
                 superChatData.autor,
                 superChatData.mensaje,
                 superChatData.monto,
                 superChatData.moneda,
                 superChatData.montoUSD,
                 JSON.stringify(superChatData.concursantes),
-                superChatData.distribucion,
-                function(err) {
-                    if (err) {
-                        console.error('❌ Error insertando super chat:', err);
-                        db.close();
-                        reject(err);
-                        return;
-                    }
-                    
-                    const superChatId = this.lastID;
-                    
-                    // Los totales se calcularán desde la base de datos, no desde memoria
-                    const totalPuntos = 0; // Se actualizará desde la BD
-                    const totalPuntosMostrados = 0; // Se actualizará desde la BD
-                    
-                    // Calcular totales desde la base de datos
-                    db.get(`
-                        SELECT 
-                            SUM(puntos_reales) as total_reales
-                        FROM concursantes
-                    `, [], (err, totales) => {
-                        if (err) {
-                            console.error('❌ Error calculando totales:', err);
-                            reject(err);
-                            return;
-                        }
-                        
-                        const updateStats = db.prepare(`
-                            UPDATE estadisticas 
-                            SET total_superchats = total_superchats + 1,
-                                total_puntos_reales = ?,
-                                ultimo_superchat_id = ?,
-                                updated_at = datetime('now')
-                            WHERE id = 1
-                        `);
-                        
-                        updateStats.run(
-                            totales.total_reales || 0, 
-                            superChatId, 
-                            (err) => {
-                            updateStats.finalize();
-                            db.close((closeErr) => {
-                                if (closeErr) {
-                                    console.error('❌ Error cerrando base de datos:', closeErr);
-                                }
-                                if (err) {
-                                    console.error('❌ Error actualizando estadísticas:', err);
-                                    reject(err);
-                                } else {
-                                    resolve(superChatId);
-                                }
-                            });
-                        });
-                    });
-                }
-            );
-            
-            insertSuperChat.finalize();
-        });
-    });
+                superChatData.distribucion
+            ]
+        );
+        
+        const superChatId = result.insertId;
+        
+        // Calcular totales desde la base de datos
+        const totales = await db.query(
+            `SELECT SUM(puntos_reales) as total_reales
+            FROM concursantes`
+        );
+        
+        // Actualizar estadísticas
+        await db.query(
+            `UPDATE estadisticas 
+            SET total_superchats = total_superchats + 1,
+                total_puntos_reales = ?,
+                ultimo_superchat_id = ?,
+                updated_at = NOW()
+            WHERE id = 1`,
+            [totales[0].total_reales || 0, superChatId]
+        );
+        
+        return superChatId;
+    } catch (err) {
+        console.error('❌ Error guardando superchat:', err.message);
+        throw err;
+    }
 }
 
 // Middlewares
@@ -298,56 +244,58 @@ app.use('*', (req, res) => {
 
 // Función para enviar puntuaciones a un cliente específico
 async function enviarPuntuacionesACliente(socket) {
-    const db = getDatabase();
-    
-    const query = `
-        SELECT 
-            nombre,
-            slug,
-            puntos_reales,
-            instagram_url,
-            ROW_NUMBER() OVER (ORDER BY puntos_reales DESC) as posicion
-        FROM concursantes 
-        ORDER BY puntos_reales DESC
-    `;
-    
-    db.all(query, [], (err, rows) => {
-        db.close();
-        if (!err && rows) {
+    try {
+        const query = `
+            SELECT 
+                nombre,
+                slug,
+                puntos_reales,
+                instagram_url,
+                @rownum := @rownum + 1 as posicion
+            FROM concursantes, (SELECT @rownum := 0) r
+            ORDER BY puntos_reales DESC
+        `;
+        
+        const rows = await db.query(query);
+        
+        if (rows && rows.length > 0) {
             socket.emit('puntuaciones-update', {
                 success: true,
                 data: rows,
                 timestamp: new Date().toISOString()
             });
         }
-    });
+    } catch (err) {
+        console.error('❌ Error enviando puntuaciones:', err.message);
+    }
 }
 
 // Función para enviar puntuaciones actualizadas a todos los clientes
 async function enviarPuntuacionesActualizadas() {
-    const db = getDatabase();
-    
-    const query = `
-        SELECT 
-            nombre,
-            slug,
-            puntos_reales,
-            instagram_url,
-            ROW_NUMBER() OVER (ORDER BY puntos_reales DESC) as posicion
-        FROM concursantes 
-        ORDER BY puntos_reales DESC
-    `;
-    
-    db.all(query, [], (err, rows) => {
-        db.close();
-        if (!err && rows) {
+    try {
+        const query = `
+            SELECT 
+                nombre,
+                slug,
+                puntos_reales,
+                instagram_url,
+                @rownum := @rownum + 1 as posicion
+            FROM concursantes, (SELECT @rownum := 0) r
+            ORDER BY puntos_reales DESC
+        `;
+        
+        const rows = await db.query(query);
+        
+        if (rows && rows.length > 0) {
             io.emit('puntuaciones-update', {
                 success: true,
                 data: rows,
                 timestamp: new Date().toISOString()
             });
         }
-    });
+    } catch (err) {
+        console.error('❌ Error enviando puntuaciones actualizadas:', err.message);
+    }
 }
 
 // Funciones del API de YouTube
@@ -567,9 +515,9 @@ async function iniciarMonitorSuperChats() {
                 nextPageToken = data.nextPageToken;
                 const waitMs = data.pollingIntervalMillis || config.system.pollingInterval;
                 
-                // Verificar título del video cada 10 iteraciones (aproximadamente cada 50 segundos)
+                // Verificar título del video cada 60 iteraciones (aproximadamente cada 5 minutos)
                 contadorVerificaciones++;
-                if (contadorVerificaciones % 10 === 0) {
+                if (contadorVerificaciones % 60 === 0) {
                     try {
                         const videoInfoActualizada = await getVideoInfo(config.youtube.videoId);
                         const diaActualizado = actualizarDiaReality(videoInfoActualizada.titulo);
@@ -597,24 +545,40 @@ async function iniciarMonitorSuperChats() {
 }
 
 // Iniciar servidor
-server.listen(PORT, () => {
-    console.log('🚀 Servidor Express + WebSocket iniciado');
-    console.log(`🌐 Interfaz web en: http://localhost:${PORT}`);
-    console.log(`📡 WebSocket: Tiempo real para Super Chats y puntuaciones`);
-    console.log(`🎯 Eventos WebSocket disponibles:`);
-    console.log(`   nuevo-superchat - Super Chats en tiempo real`);
-    console.log(`   puntuaciones-update - Puntuaciones actualizadas`);
-    console.log(`   estadisticas-update - Estadísticas generales`);
-    console.log(`   monitor-status - Estado del monitor`);
-    console.log('🔄 Presiona Ctrl+C para detener el servidor\n');
-    
-    // Iniciar monitor de Super Chats automáticamente
-    setTimeout(() => {
-        iniciarMonitorSuperChats().catch(err => {
-            console.error('❌ Error iniciando monitor de Super Chats:', err.message);
-            console.log('ℹ️ El servidor web seguirá funcionando sin el monitor');
+async function startServer() {
+    try {
+        // Inicializar la base de datos MySQL primero
+        console.log('🔄 Inicializando base de datos MySQL...');
+        await db.initializeDatabase();
+        console.log('✅ Base de datos MySQL inicializada correctamente');
+        
+        // Luego iniciar el servidor
+        server.listen(PORT, () => {
+            console.log('🚀 Servidor Express + WebSocket iniciado');
+            console.log(`🌐 Interfaz web en: http://localhost:${PORT}`);
+            console.log(`📡 WebSocket: Tiempo real para Super Chats y puntuaciones`);
+            console.log(`🎯 Eventos WebSocket disponibles:`);
+            console.log(`   nuevo-superchat - Super Chats en tiempo real`);
+            console.log(`   puntuaciones-update - Puntuaciones actualizadas`);
+            console.log(`   estadisticas-update - Estadísticas generales`);
+            console.log(`   monitor-status - Estado del monitor`);
+            console.log('🔄 Presiona Ctrl+C para detener el servidor\n');
+            
+            // Iniciar monitor de Super Chats automáticamente
+            setTimeout(() => {
+                iniciarMonitorSuperChats().catch(err => {
+                    console.error('❌ Error iniciando monitor de Super Chats:', err.message);
+                    console.log('ℹ️ El servidor web seguirá funcionando sin el monitor');
+                });
+            }, 2000); // Esperar 2 segundos para que el servidor esté completamente listo
         });
-    }, 2000); // Esperar 2 segundos para que el servidor esté completamente listo
-});
+    } catch (err) {
+        console.error('❌ Error al iniciar el servidor:', err);
+        process.exit(1);
+    }
+}
+
+// Iniciar el servidor
+startServer();
 
 module.exports = app; 

@@ -199,10 +199,15 @@
     <!-- Script para actualizar puntuaciones en tiempo real -->
     <script>
         // Conexión WebSocket
-const socket = io({
-    transports: ['websocket', 'polling'],
-    path: '/socket.io'
-});
+        const socket = io({
+            transports: ['websocket', 'polling'],
+            path: '/socket.io',
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 5000,
+            reconnectionDelayMax: 60000,
+            timeout: 60000
+        });
         
         // Variables globales
         let isConnected = false;
@@ -470,10 +475,10 @@ const socket = io({
         document.addEventListener('DOMContentLoaded', function() {
             updateLastUpdateTime(); // Actualizar hora inmediatamente
             
-            // Actualizar hora cada 30 segundos (solo la hora, los datos vienen por WebSocket)
+            // Actualizar hora cada 5 minutos (solo la hora, los datos vienen por WebSocket)
             setInterval(() => {
                 updateLastUpdateTime();
-            }, 30000);
+            }, 300000);
         });
     </script>
 </body>

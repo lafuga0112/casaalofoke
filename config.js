@@ -1,12 +1,19 @@
 module.exports = {
-  // Base de datos SQLite
+  // Base de datos MySQL
   database: {
+    type: 'mysql',
+    host: process.env.DB_HOST || 'mysql-200838-0.cloudclusters.net',
+    port: process.env.DB_PORT || 10089,
+    user: process.env.DB_USER || 'admin',
+    password: process.env.DB_PASSWORD || 'XdouTMvd',
+    database: process.env.DB_NAME || 'alofoke',
+    // Mantener compatibilidad con SQLite para desarrollo local
     path: process.env.DB_PATH || './database/alofoke_reality.db'
   },
   
   // YouTube API
   youtube: {
-    apiKey: process.env.YT_API_KEY || 'AIzaSyBBQNhk91YVg6yWJYFxy5GE8OgR8k62pGg',
+    apiKey: process.env.YT_API_KEY || 'AIzaSyDPdhbk59tmWDg17GNkg3XCeprjbP5t6YY',
     videoId: process.env.YT_VIDEO_ID || 'gOJvu0xYsdo'
   },
   
@@ -18,7 +25,7 @@ module.exports = {
   
   // Configuración del sistema
   system: {
-    pollingInterval: parseInt(process.env.POLLING_INTERVAL) || 5000,
+    pollingInterval: parseInt(process.env.POLLING_INTERVAL) || 300000,
     effectivenessPercentage: parseFloat(process.env.EFFECTIVENESS_PERCENTAGE) || 0.7
   }
 }; 

@@ -6,11 +6,34 @@ const { CONCURSANTES } = require('../keywords');
 
 // Crear directorio database si no existe
 const dbDir = path.dirname(config.database.path);
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+try {
+    if (!fs.existsSync(dbDir)) {
+        console.log(`📁 Creando directorio para la base de datos: ${dbDir}`);
+        fs.mkdirSync(dbDir, { recursive: true });
+        console.log(`✅ Directorio creado exitosamente`);
+    } else {
+        console.log(`✅ Directorio de base de datos ya existe: ${dbDir}`);
+    }
+    
+    // Verificar permisos
+    fs.accessSync(dbDir, fs.constants.W_OK);
+    console.log(`✅ Permisos de escritura verificados para: ${dbDir}`);
+} catch (err) {
+    console.error(`❌ Error con el directorio de la base de datos: ${err.message}`);
+    console.error(`📁 Ruta absoluta: ${path.resolve(dbDir)}`);
+    // No salimos del proceso aquí, intentamos continuar
 }
 
-const db = new sqlite3.Database(config.database.path);
+// Crear conexión a la base de datos con mejor manejo de errores
+let db;
+try {
+    console.log(`🔄 Conectando a la base de datos: ${config.database.path}`);
+    db = new sqlite3.Database(config.database.path);
+    console.log(`✅ Conexión establecida`);
+} catch (err) {
+    console.error(`❌ Error conectando a la base de datos: ${err.message}`);
+    throw err;
+}
 
 // SQL para crear las tablas
 const createTables = `
@@ -121,7 +144,15 @@ function initializeDatabase() {
 
 // Función para obtener la instancia de la base de datos
 function getDatabase() {
-    return new sqlite3.Database(config.database.path);
+    try {
+        return new sqlite3.Database(config.database.path);
+    } catch (err) {
+        console.error(`❌ Error al obtener conexión a la base de datos: ${err.message}`);
+        console.error(`📁 Ruta de la base de datos: ${config.database.path}`);
+        // Devolver una base de datos en memoria como fallback
+        console.log(`⚠️ Usando base de datos en memoria como fallback`);
+        return new sqlite3.Database(':memory:');
+    }
 }
 
 // Si se ejecuta directamente, inicializar la base de datos
