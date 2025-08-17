@@ -12,51 +12,8 @@ const db = require('./database/mysql-init');
 const { CONCURSANTES } = require('./keywords.js');
 const { TASAS_CONVERSION } = require('./conversiones.js');
 
-// Función para obtener la siguiente API key en rotación
-function getNextApiKey() {
-    const keys = config.youtube.apiKeys;
-    if (!keys || keys.length === 0) {
-        throw new Error('No hay API keys configuradas');
-    }
-    
-    // Incrementar el índice y hacer rotación si es necesario
-    config.youtube.lastKeyIndex = (config.youtube.lastKeyIndex + 1) % keys.length;
-    
-    return keys[config.youtube.lastKeyIndex];
-}
-
-// Función para manejar errores de cuota de la API de YouTube
-async function handleApiRequest(requestFn) {
-    const maxRetries = config.youtube.apiKeys.length; // Intentar con todas las API keys disponibles
-    let lastError = null;
-    
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-            return await requestFn();
-        } catch (error) {
-            lastError = error;
-            
-            // Verificar si es un error de cuota o API key inválida
-            if (error.message.includes('quota') || 
-                error.message.includes('403') || 
-                error.message.includes('API key not valid') || 
-                error.message.includes('400')) {
-                
-                console.error(`❌ Error con API key #${config.youtube.lastKeyIndex + 1}: ${error.message}`);
-                console.log(`🔄 Intentando con siguiente API key...`);
-                // Ya estamos rotando la API key en cada llamada a getNextApiKey
-                continue;
-            }
-            
-            // Si no es un error de cuota o API key, propagar el error
-            throw error;
-        }
-    }
-    
-    // Si llegamos aquí, todas las API keys han fallado
-    console.error('❌ Todas las API keys han fallado. Verifica que sean válidas y tengan cuota disponible.');
-    throw lastError;
-}
+// Importar el módulo de la API de YouTube
+const youtubeApi = require('./youtube-api');
 
 const app = express();
 const server = http.createServer(app);
@@ -107,14 +64,13 @@ async function obtenerEstadisticasParaSocket(socket) {
     try {
         const query = `
             SELECT 
-                e.*,
-                s.autor as ultimo_autor,
-                s.mensaje as ultimo_mensaje,
-                s.monto_usd as ultimo_monto_usd,
-                s.timestamp as ultimo_timestamp
-            FROM estadisticas e
-            LEFT JOIN superchats s ON e.ultimo_superchat_id = s.id
-            WHERE e.id = 1
+                total_superchats,
+                total_puntos_reales,
+                total_puntos_mostrados,
+                fecha_inicio,
+                updated_at
+            FROM estadisticas
+            WHERE id = 1
         `;
         
         const row = await db.query(query);
@@ -124,12 +80,7 @@ async function obtenerEstadisticasParaSocket(socket) {
                 totalSuperChats: row[0].total_superchats || 0,
                 totalPuntosReales: row[0].total_puntos_reales || 0,
                 totalPuntosMostrados: row[0].total_puntos_mostrados || 0,
-                ultimoSuperChat: row[0].ultimo_autor ? {
-                    autor: row[0].ultimo_autor,
-                    mensaje: row[0].ultimo_mensaje,
-                    montoUSD: row[0].ultimo_monto_usd,
-                    timestamp: row[0].ultimo_timestamp
-                } : null,
+                ultimoSuperChat: null, // Ya no tenemos esta información
                 timestamp: new Date().toISOString()
             });
         }
@@ -210,30 +161,48 @@ async function distribuirPuntos(concursantes, puntosUSD) {
 
 async function guardarSuperChatBD(superChatData) {
     try {
-        // Ya no insertamos el superchat en la base de datos
-        // Solo generamos un ID único para el frontend
-        const superChatId = Date.now(); // Usar timestamp como ID único
+        // Generamos un ID único para el frontend
+        const superChatId = Date.now();
         
-        // Calcular totales desde la base de datos
-        const [totales] = await db.query(
-            `SELECT SUM(puntos_reales) as total_reales
-            FROM concursantes`
-        );
-        
-        // Actualizar estadísticas (sin guardar referencia al superchat)
+        // Actualizar estadísticas
         await db.query(
             `UPDATE estadisticas 
             SET total_superchats = total_superchats + 1,
-                total_puntos_reales = ?,
                 updated_at = NOW()
-            WHERE id = 1`,
-            [totales[0]?.total_reales || 0]
+            WHERE id = 1`
         );
         
         return superChatId;
     } catch (err) {
         console.error('❌ Error actualizando puntos:', err.message);
         throw err;
+    }
+}
+
+// Función para actualizar el total de puntos en la tabla estadisticas
+async function actualizarTotalPuntos() {
+    try {
+        // Calcular totales desde la base de datos
+        const [totales] = await db.query(
+            `SELECT SUM(puntos_reales) as total_reales, 
+                    SUM(puntos_mostrados) as total_mostrados
+            FROM concursantes`
+        );
+        
+        // Actualizar estadísticas
+        await db.query(
+            `UPDATE estadisticas 
+            SET total_puntos_reales = ?,
+                total_puntos_mostrados = ?,
+                updated_at = NOW()
+            WHERE id = 1`,
+            [
+                totales[0]?.total_reales || 0,
+                totales[0]?.total_mostrados || 0
+            ]
+        );
+    } catch (err) {
+        console.error('❌ Error actualizando total de puntos:', err.message);
     }
 }
 
@@ -245,12 +214,143 @@ app.use(express.static('.')); // Servir archivos estáticos desde la raíz
 // Rutas para archivos estáticos
 app.use('/images', express.static('images'));
 
+// Ruta para la página de administración
+// app.get('/admin', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'admin.html'));
+// });
+
+// Rutas para la administración de claves API
+app.get('/api/keys', async (req, res) => {
+    try {
+        const rows = await db.query(
+            `SELECT id, api_key, is_active, quota_used, 
+            last_used, created_at, updated_at 
+            FROM api_keys 
+            ORDER BY id ASC`
+        );
+        
+        res.json({
+            success: true,
+            data: rows,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('❌ Error obteniendo claves API:', err.message);
+        res.status(500).json({
+            success: false,
+            error: err.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+app.post('/api/keys', async (req, res) => {
+    try {
+        const { api_key } = req.body;
+        
+        if (!api_key) {
+            return res.status(400).json({
+                success: false,
+                error: 'La clave API es requerida',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // Insertar la nueva clave API
+        await db.query(
+            `INSERT INTO api_keys (api_key) 
+            VALUES (?)`,
+            [api_key]
+        );
+        
+        // Recargar las claves API
+        await youtubeApi.cargarApiKeys();
+        
+        res.json({
+            success: true,
+            message: 'Clave API agregada correctamente',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('❌ Error agregando clave API:', err.message);
+        res.status(500).json({
+            success: false,
+            error: err.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+app.put('/api/keys/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { is_active } = req.body;
+        
+        // Actualizar la clave API
+        await db.query(
+            `UPDATE api_keys 
+            SET is_active = ?
+            WHERE id = ?`,
+            [is_active, id]
+        );
+        
+        // Recargar las claves API
+        await youtubeApi.cargarApiKeys();
+        
+        res.json({
+            success: true,
+            message: 'Clave API actualizada correctamente',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('❌ Error actualizando clave API:', err.message);
+        res.status(500).json({
+            success: false,
+            error: err.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+app.delete('/api/keys/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Eliminar la clave API
+        await db.query(
+            `DELETE FROM api_keys WHERE id = ?`,
+            [id]
+        );
+        
+        // Recargar las claves API
+        await youtubeApi.cargarApiKeys();
+        
+        res.json({
+            success: true,
+            message: 'Clave API eliminada correctamente',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('❌ Error eliminando clave API:', err.message);
+        res.status(500).json({
+            success: false,
+            error: err.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Solo ruta para servir la interfaz web
 
 // Servir la interfaz web
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// Servir la página de administración
+// app.get('/admin', (req, res) => {
+//     res.sendFile(path.join(__dirname, 'admin.html'));
+// });
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
@@ -329,40 +429,20 @@ async function enviarPuntuacionesActualizadas() {
 
 // Funciones del API de YouTube
 async function getVideoInfo(videoId) {
-    return handleApiRequest(async () => {
-        const url = new URL("https://www.googleapis.com/youtube/v3/videos");
-        url.search = new URLSearchParams({
-            part: "snippet,liveStreamingDetails",
-            id: videoId,
-            key: getNextApiKey(),
-        });
-
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        // Verificar errores de la API
-        if (data.error) {
-            throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
-        }
-
-        if (!data.items?.length) throw new Error("Video no encontrado o no está en vivo.");
-        
-        const video = data.items[0];
-        const liveChatId = video.liveStreamingDetails?.activeLiveChatId;
-        if (!liveChatId) throw new Error("Este video no tiene chat en vivo.");
-        
-        return {
-            liveChatId,
-            titulo: video.snippet?.title || "Sin título",
-            descripcion: video.snippet?.description || "",
-            fechaInicio: video.liveStreamingDetails?.actualStartTime || new Date().toISOString()
-        };
-    });
+    return youtubeApi.getVideoInfo(videoId);
 }
 
 async function getLiveChatId(videoId) {
-    const videoInfo = await getVideoInfo(videoId);
-    return videoInfo.liveChatId;
+    return youtubeApi.getLiveChatId(videoId);
+}
+
+async function pollChat(liveChatId, pageToken) {
+    return youtubeApi.pollChat(liveChatId, pageToken);
+}
+
+// Función para verificar que las API keys sean válidas
+async function verificarApiKeys() {
+    return youtubeApi.verificarApiKeys();
 }
 
 // Función para extraer el día del título del video
@@ -417,33 +497,6 @@ function actualizarDiaReality(nuevoTitulo) {
     return false; // No hubo cambios
 }
 
-async function pollChat(liveChatId, pageToken) {
-    return handleApiRequest(async () => {
-        const url = new URL("https://www.googleapis.com/youtube/v3/liveChat/messages");
-        url.search = new URLSearchParams({
-            liveChatId,
-            part: "snippet,authorDetails",
-            key: getNextApiKey(),
-            pageToken: pageToken || "",
-        });
-
-        const res = await fetch(url);
-        if (!res.ok) {
-            const text = await res.text();
-            throw new Error(`Error API: ${res.status} ${text}`);
-        }
-        
-        const data = await res.json();
-        
-        // Verificar errores de la API
-        if (data.error) {
-            throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
-        }
-        
-        return data;
-    });
-}
-
 // Monitor de Super Chats integrado
 async function iniciarMonitorSuperChats() {
     if (isMonitoringActive) {
@@ -455,7 +508,7 @@ async function iniciarMonitorSuperChats() {
         console.log('🔄 Iniciando monitor de Super Chats...');
         
         // Obtener información del video
-        const videoInfo = await getVideoInfo(config.youtube.videoId);
+        const videoInfo = await youtubeApi.getVideoInfo(config.youtube.videoId);
         
         // Detectar y actualizar el día del reality
         actualizarDiaReality(videoInfo.titulo);
@@ -470,7 +523,7 @@ async function iniciarMonitorSuperChats() {
         // Función para verificar el título del video
         const verificarTitulo = async () => {
             try {
-                const videoInfoActualizada = await getVideoInfo(config.youtube.videoId);
+                const videoInfoActualizada = await youtubeApi.getVideoInfo(config.youtube.videoId);
                 const diaActualizado = actualizarDiaReality(videoInfoActualizada.titulo);
                 
                 if (diaActualizado) {
@@ -495,7 +548,14 @@ async function iniciarMonitorSuperChats() {
 
         while (isMonitoringActive) {
             try {
-                const data = await pollChat(liveChatId, nextPageToken);
+                const data = await youtubeApi.pollChat(liveChatId, nextPageToken);
+                
+                // Contar cuántos SuperChats hay en los mensajes recibidos
+                const superChatsCount = data.items?.filter(item => item.snippet?.superChatDetails).length || 0;
+                
+                if (superChatsCount > 0) {
+                    console.log(`💰 SuperChats detectados: ${superChatsCount}`);
+                }
 
                 for (const item of data.items || []) {
                     const author = item.authorDetails?.displayName || "Desconocido";
@@ -507,12 +567,18 @@ async function iniciarMonitorSuperChats() {
                         const montoOriginal = Number(sc.amountMicros || 0) / 1_000_000;
                         const moneda = sc.currency || "";
                         const msg = sc.userComment || "";
+                        
+                        console.log(`💸 SuperChat #${contadorSuperChats} de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
+                        
                         const concursantes = detectarConcursantes(msg);
+                        console.log(`👥 Concursantes detectados: ${concursantes.join(', ') || 'Ninguno'}`);
                         
                         const montoUSD = Math.round(convertirAUSD(montoOriginal, moneda));
+                        console.log(`💵 Monto en USD: $${montoUSD}`);
                         
                         // Distribuir puntos entre los concursantes
                         const distribucion = await distribuirPuntos(concursantes, montoUSD);
+                        console.log(`📊 Distribución de puntos: ${distribucion}`);
                         
                         // Datos mínimos necesarios para actualizar puntos
                         const superChatData = {
@@ -549,6 +615,9 @@ async function iniciarMonitorSuperChats() {
                             
                             io.emit('nuevo-superchat', superChatParaEnviar);
                             
+                            // Actualizar el total de puntos en estadisticas
+                            await actualizarTotalPuntos();
+                            
                             // Enviar puntuaciones actualizadas
                             enviarPuntuacionesActualizadas();
                             
@@ -580,11 +649,14 @@ async function iniciarMonitorSuperChats() {
 // Iniciar servidor
 async function startServer() {
     try {
-        // Verificar API keys antes de iniciar
-        await verificarApiKeys();
-        
         // Inicializar la base de datos MySQL primero
         await db.initializeDatabase();
+        
+        // Cargar las claves API desde la base de datos
+        await youtubeApi.cargarApiKeys();
+        
+        // Verificar API keys antes de iniciar
+        const apiKeysValidas = await youtubeApi.verificarApiKeys();
         
         // Luego iniciar el servidor
         server.listen(PORT, () => {
@@ -592,12 +664,17 @@ async function startServer() {
             console.log(`🌐 Interfaz web en: http://localhost:${PORT}`);
             console.log('🔄 Presiona Ctrl+C para detener el servidor\n');
             
-            // Iniciar monitor de Super Chats automáticamente
-            setTimeout(() => {
-                iniciarMonitorSuperChats().catch(err => {
-                    console.error('❌ Error iniciando monitor de Super Chats:', err.message);
-                });
-            }, 2000); // Esperar 2 segundos para que el servidor esté completamente listo
+            // Iniciar monitor de Super Chats automáticamente solo si hay API keys válidas
+            if (apiKeysValidas) {
+                setTimeout(() => {
+                    iniciarMonitorSuperChats().catch(err => {
+                        console.error('❌ Error iniciando monitor de Super Chats:', err.message);
+                    });
+                }, 2000); // Esperar 2 segundos para que el servidor esté completamente listo
+            } else {
+                console.error('❌ No hay claves API válidas disponibles. Por favor, agrega claves API válidas en la página de administración.');
+                console.log('⚠️ El servidor está funcionando pero sin monitoreo de SuperChats.');
+            }
         });
     } catch (err) {
         console.error('❌ Error al iniciar el servidor:', err);
@@ -605,51 +682,7 @@ async function startServer() {
     }
 }
 
-// Función para verificar que las API keys sean válidas
-async function verificarApiKeys() {
-    console.log('🔑 Verificando API keys de YouTube...');
-    
-    const apiKeys = config.youtube.apiKeys;
-    if (!apiKeys || apiKeys.length === 0) {
-        throw new Error('No hay API keys configuradas');
-    }
-    
-    // Verificar cada API key
-    let keysValidas = 0;
-    for (let i = 0; i < apiKeys.length; i++) {
-        const apiKey = apiKeys[i];
-        try {
-            // Hacer una solicitud simple para verificar la API key
-            const url = new URL("https://www.googleapis.com/youtube/v3/videos");
-            url.search = new URLSearchParams({
-                part: "snippet",
-                chart: "mostPopular",
-                maxResults: "1",
-                key: apiKey
-            });
-            
-            const res = await fetch(url);
-            const data = await res.json();
-            
-            if (data.error) {
-                console.error(`❌ API key #${i+1} inválida: ${data.error.message}`);
-            } else {
-                console.log(`✅ API key #${i+1} válida`);
-                keysValidas++;
-            }
-        } catch (err) {
-            console.error(`❌ Error verificando API key #${i+1}: ${err.message}`);
-        }
-    }
-    
-    if (keysValidas === 0) {
-        throw new Error('Ninguna API key es válida. Verifica tus claves API de YouTube.');
-    } else {
-        console.log(`✅ ${keysValidas} de ${apiKeys.length} API keys son válidas`);
-    }
-}
+module.exports = app;
 
 // Iniciar el servidor
-startServer();
-
-module.exports = app; 
+startServer(); 

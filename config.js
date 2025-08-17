@@ -11,21 +11,8 @@ module.exports = {
   
   // YouTube API
   youtube: {
-    // Múltiples API keys para rotación (cada una en su propio string)
-    apiKeys: (process.env.YT_API_KEYS ? 
-      process.env.YT_API_KEYS.split(',') : 
-      [
-        'AIzaSyDPdhbk59tmWDg17GNkg3XCeprjbP5t6YY', 
-        'AIzaSyANHms7VXPx-_Dz_R-0nwmvYraPSU3mEFA',
-        'AIzaSyDUFaMXWEES9eJNm2XCe7wpG5ycsRb8RhA',
-        'AIzaSyA2j4_L5IW0Aib2StYYerATSdX5adNNFo0', 
-        'AIzaSyDGw1WGn9TQeBTvLt6uQNbYse-U4mWXTvI',
-        'AIzaSyArO6cPg9_Ysr0uHgsoC7CNHSVOS8j23Ug', 
-        'AIzaSyAld1oLpWaPEn16E5lTSYp1qxVvr-HmA_8',
-        // Eliminada la clave inválida: 'AIzaSyClJNtL0FbCG8QULGjYeYwjYlwYKfOxx9g',
-        'AIzaSyBE-01Ew87_BQKnJjw-TrF2HPm86gOSa6U'
-      ]
-    ),
+    // Las claves API se gestionan exclusivamente desde la base de datos
+    apiKeys: [],
     videoId: process.env.YT_VIDEO_ID || 'gOJvu0xYsdo',
     // Índice de la última API key utilizada
     lastKeyIndex: 0
@@ -42,4 +29,4 @@ module.exports = {
     pollingInterval: null, // Usar exclusivamente pollingIntervalMillis de la API
     effectivenessPercentage: parseFloat(process.env.EFFECTIVENESS_PERCENTAGE) || 0.7
   }
-}; 
+};  

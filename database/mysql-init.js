@@ -29,19 +29,6 @@ CREATE TABLE IF NOT EXISTS concursantes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
 
-const createSuperchatsTable = `
-CREATE TABLE IF NOT EXISTS superchats (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    autor VARCHAR(100) NOT NULL,
-    mensaje TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    monto_original DECIMAL(10,2) NOT NULL,
-    moneda VARCHAR(10) NOT NULL,
-    monto_usd DECIMAL(10,2) NOT NULL,
-    concursantes_detectados TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    distribucion TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
-
 const createEstadisticasTable = `
 CREATE TABLE IF NOT EXISTS estadisticas (
     id INT PRIMARY KEY,
@@ -49,6 +36,17 @@ CREATE TABLE IF NOT EXISTS estadisticas (
     total_puntos_reales DECIMAL(10,2) DEFAULT 0,
     total_puntos_mostrados INT DEFAULT 0,
     fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
+
+const createApiKeysTable = `
+CREATE TABLE IF NOT EXISTS api_keys (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    api_key VARCHAR(100) UNIQUE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    quota_used INT DEFAULT 0,
+    last_used TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
 
@@ -63,12 +61,11 @@ INSERT IGNORE INTO estadisticas (id, fecha_inicio) VALUES (1, NOW())
 
 // Pool de conexiones
 let pool;
+let initialized = false;
 
 // Inicializar la base de datos
 async function initializeDatabase() {
     try {
-
-        
         // Crear el pool de conexiones
         pool = mysql.createPool(dbConfig);
         
@@ -87,9 +84,15 @@ async function initializeDatabase() {
         
         // Crear tablas
         await pool.query(createConcursantesTable);
-        // Ya no creamos la tabla superchats
         await pool.query(createEstadisticasTable);
         await pool.query(insertEstadisticasIniciales);
+        await pool.query(createApiKeysTable);
+        
+        console.log('✅ Tablas creadas exitosamente');
+        
+        // Verificar si ya existen claves API en la tabla
+        const [apiKeys] = await pool.query('SELECT COUNT(*) as count FROM api_keys');
+        console.log(`ℹ️ Se encontraron ${apiKeys[0].count} claves API en la base de datos`);
         
         // Insertar concursantes iniciales
         
@@ -104,70 +107,56 @@ async function initializeDatabase() {
             'JIMENEZ': 'https://www.instagram.com/jimenez_tv/',
             'PEKY': 'https://www.instagram.com/lapekipr/',
             'CRUSITA': 'https://www.instagram.com/crusita___/',
-            'LUISE': 'https://www.instagram.com/luisemartinezz12/',
+            'LUISE': 'https://www.instagram.com/luisemartinezz12/'
         };
         
-        // Insertar cada concursante
+        // Insertar o actualizar cada concursante
         for (const [key, concursante] of Object.entries(CONCURSANTES)) {
-            const slug = concursante.nombre.toLowerCase();
-            const instagram = instagramUrls[concursante.nombre] || '#';
-            
             try {
                 await pool.query(
                     'INSERT INTO concursantes (nombre, slug, instagram_url) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE instagram_url = ?',
-                    [concursante.nombre, slug, instagram, instagram]
+                    [concursante.nombre, concursante.nombre.toLowerCase(), instagramUrls[concursante.nombre] || '', instagramUrls[concursante.nombre] || '']
                 );
             } catch (err) {
-                console.error(`❌ Error insertando ${concursante.nombre}:`, err.message);
+                console.error(`❌ Error insertando concursante ${concursante.nombre}:`, err.message);
             }
         }
         
-
+        console.log('✅ Concursantes insertados exitosamente');
+        
+        // Marcar como inicializada
+        initialized = true;
         
         return pool;
     } catch (err) {
-        console.error('❌ Error inicializando MySQL:', err.message);
+        console.error('❌ Error inicializando la base de datos:', err.message);
         throw err;
     }
 }
 
-// Función para obtener una conexión de la base de datos
-async function getConnection() {
-    if (!pool) {
-        await initializeDatabase();
-    }
-    return pool.getConnection();
+// Función para verificar si la base de datos está inicializada
+function isInitialized() {
+    return initialized;
 }
 
-// Función para ejecutar una consulta
-async function query(sql, params = []) {
+// Función para ejecutar consultas
+async function query(sql, params) {
     if (!pool) {
-        await initializeDatabase();
+        throw new Error('La base de datos no ha sido inicializada');
     }
+    
     try {
         const [results] = await pool.query(sql, params);
         return results;
     } catch (err) {
-        console.error('❌ Error en consulta MySQL:', err.message);
-        console.error('SQL:', sql);
+        console.error('❌ Error en consulta SQL:', err.message);
         throw err;
     }
 }
 
-// Si se ejecuta directamente, inicializar la base de datos
-if (require.main === module) {
-    initializeDatabase()
-        .then(() => {
-            process.exit(0);
-        })
-        .catch((err) => {
-            console.error('❌ Error inicializando base de datos MySQL:', err);
-            process.exit(1);
-        });
-}
-
+// Exportar funciones
 module.exports = {
     initializeDatabase,
-    getConnection,
-    query
+    query,
+    isInitialized
 }; 

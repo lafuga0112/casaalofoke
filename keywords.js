@@ -79,7 +79,8 @@ const CONCURSANTES = {
       "luise,",
       "luise &",
       'TEAMÑAÑO',
-      'Ñaño'
+      'Ñaño',
+      "Ñañitoo"
     ]
   },
   GIGI: {
