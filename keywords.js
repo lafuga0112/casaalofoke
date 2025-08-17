@@ -60,7 +60,8 @@ const CONCURSANTES = {
       "crusita y",
       "crusita,",
       "crusita &",
-      "Team Crucita"
+      "Team Crucita",
+      'Cruzita'
     ]
   },
   LUISE: {
@@ -136,7 +137,8 @@ const CONCURSANTES = {
       "crazy va a ganar",
       "crazy y",
       "crazy,",
-      "crazy &"
+      "crazy &",
+      'desing'
     ]
   },
   VLADY: {
@@ -153,7 +155,9 @@ const CONCURSANTES = {
       "vlady y",
       "vlady,",
       "vlady &",
-      'bladdy'
+      'bladdy',
+      'Blady',
+      
     ]
   },
   KAROLA: {
