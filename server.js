@@ -514,8 +514,8 @@ async function iniciarMonitorSuperChats() {
                         
                         try {
                             // Solo distribuir puntos - no guardar nada más
-                            const distribucion = await distribuirPuntos(concursantes, montoUSD);
-                            console.log(`📊 Distribución de puntos: ${distribucion}`);
+                        const distribucion = await distribuirPuntos(concursantes, montoUSD);
+                        console.log(`📊 Distribución de puntos: ${distribucion}`);
                             
                             // Calcular puntos realmente distribuidos
                             const puntosDistribuidos = concursantes.includes("SIN CLASIFICAR") ? 

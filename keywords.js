@@ -161,7 +161,7 @@ const CONCURSANTES = {
       "vlady &",
       'bladdy',
       'Blady',
-      
+      'bladi',      
     ]
   },
   KAROLA: {

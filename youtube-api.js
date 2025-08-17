@@ -425,14 +425,14 @@ async function pollChat(liveChatId, pageToken) {
         try {
             const res = await axios.get(url.toString());
             const data = res.data;
-            
-            // Verificar errores de la API
-            if (data.error) {
-                console.error(`❌ Error en respuesta API: ${data.error.code} ${data.error.message}`);
-                throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
-            }
-            
-            return data;
+        
+        // Verificar errores de la API
+        if (data.error) {
+            console.error(`❌ Error en respuesta API: ${data.error.code} ${data.error.message}`);
+            throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
+        }
+        
+        return data;
         } catch (error) {
             if (error.response) {
                 console.error(`❌ Error en respuesta HTTP: ${error.response.status}`);
