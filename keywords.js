@@ -23,7 +23,8 @@ const CONCURSANTES = {
       "#teamgiuseppe",
       "giusepe",
       "team giusepe",
-      "#teamgiusepe"
+      "#teamgiusepe",
+      'Trujilo'
     ]
   },
   JIMENEZ: {
