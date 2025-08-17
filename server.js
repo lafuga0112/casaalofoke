@@ -12,6 +12,52 @@ const db = require('./database/mysql-init');
 const { CONCURSANTES } = require('./keywords.js');
 const { TASAS_CONVERSION } = require('./conversiones.js');
 
+// Función para obtener la siguiente API key en rotación
+function getNextApiKey() {
+    const keys = config.youtube.apiKeys;
+    if (!keys || keys.length === 0) {
+        throw new Error('No hay API keys configuradas');
+    }
+    
+    // Incrementar el índice y hacer rotación si es necesario
+    config.youtube.lastKeyIndex = (config.youtube.lastKeyIndex + 1) % keys.length;
+    
+    return keys[config.youtube.lastKeyIndex];
+}
+
+// Función para manejar errores de cuota de la API de YouTube
+async function handleApiRequest(requestFn) {
+    const maxRetries = config.youtube.apiKeys.length; // Intentar con todas las API keys disponibles
+    let lastError = null;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            return await requestFn();
+        } catch (error) {
+            lastError = error;
+            
+            // Verificar si es un error de cuota o API key inválida
+            if (error.message.includes('quota') || 
+                error.message.includes('403') || 
+                error.message.includes('API key not valid') || 
+                error.message.includes('400')) {
+                
+                console.error(`❌ Error con API key #${config.youtube.lastKeyIndex + 1}: ${error.message}`);
+                console.log(`🔄 Intentando con siguiente API key...`);
+                // Ya estamos rotando la API key en cada llamada a getNextApiKey
+                continue;
+            }
+            
+            // Si no es un error de cuota o API key, propagar el error
+            throw error;
+        }
+    }
+    
+    // Si llegamos aquí, todas las API keys han fallado
+    console.error('❌ Todas las API keys han fallado. Verifica que sean válidas y tengan cuota disponible.');
+    throw lastError;
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -32,7 +78,6 @@ let tituloVideoActual = "";
 // WebSocket connections
 io.on('connection', (socket) => {
     clientesConectados++;
-    console.log(`🔌 Cliente conectado. Total: ${clientesConectados}`);
     
     // Enviar estado inicial al cliente
     socket.emit('monitor-status', {
@@ -49,7 +94,6 @@ io.on('connection', (socket) => {
     
     socket.on('disconnect', () => {
         clientesConectados--;
-        console.log(`🔌 Cliente desconectado. Total: ${clientesConectados}`);
     });
     
     // Handler para solicitud de puntuaciones
@@ -166,44 +210,29 @@ async function distribuirPuntos(concursantes, puntosUSD) {
 
 async function guardarSuperChatBD(superChatData) {
     try {
-        // Insertar el superchat
-        const result = await db.query(
-            `INSERT INTO superchats 
-            (autor, mensaje, monto_original, moneda, monto_usd, concursantes_detectados, distribucion)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [
-                superChatData.autor,
-                superChatData.mensaje,
-                superChatData.monto,
-                superChatData.moneda,
-                superChatData.montoUSD,
-                JSON.stringify(superChatData.concursantes),
-                superChatData.distribucion
-            ]
-        );
-        
-        const superChatId = result.insertId;
+        // Ya no insertamos el superchat en la base de datos
+        // Solo generamos un ID único para el frontend
+        const superChatId = Date.now(); // Usar timestamp como ID único
         
         // Calcular totales desde la base de datos
-        const totales = await db.query(
+        const [totales] = await db.query(
             `SELECT SUM(puntos_reales) as total_reales
             FROM concursantes`
         );
         
-        // Actualizar estadísticas
+        // Actualizar estadísticas (sin guardar referencia al superchat)
         await db.query(
             `UPDATE estadisticas 
             SET total_superchats = total_superchats + 1,
                 total_puntos_reales = ?,
-                ultimo_superchat_id = ?,
                 updated_at = NOW()
             WHERE id = 1`,
-            [totales[0].total_reales || 0, superChatId]
+            [totales[0]?.total_reales || 0]
         );
         
         return superChatId;
     } catch (err) {
-        console.error('❌ Error guardando superchat:', err.message);
+        console.error('❌ Error actualizando puntos:', err.message);
         throw err;
     }
 }
@@ -300,28 +329,35 @@ async function enviarPuntuacionesActualizadas() {
 
 // Funciones del API de YouTube
 async function getVideoInfo(videoId) {
-    const url = new URL("https://www.googleapis.com/youtube/v3/videos");
-    url.search = new URLSearchParams({
-        part: "snippet,liveStreamingDetails",
-        id: videoId,
-        key: config.youtube.apiKey,
+    return handleApiRequest(async () => {
+        const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+        url.search = new URLSearchParams({
+            part: "snippet,liveStreamingDetails",
+            id: videoId,
+            key: getNextApiKey(),
+        });
+
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        // Verificar errores de la API
+        if (data.error) {
+            throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
+        }
+
+        if (!data.items?.length) throw new Error("Video no encontrado o no está en vivo.");
+        
+        const video = data.items[0];
+        const liveChatId = video.liveStreamingDetails?.activeLiveChatId;
+        if (!liveChatId) throw new Error("Este video no tiene chat en vivo.");
+        
+        return {
+            liveChatId,
+            titulo: video.snippet?.title || "Sin título",
+            descripcion: video.snippet?.description || "",
+            fechaInicio: video.liveStreamingDetails?.actualStartTime || new Date().toISOString()
+        };
     });
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if (!data.items?.length) throw new Error("Video no encontrado o no está en vivo.");
-    
-    const video = data.items[0];
-    const liveChatId = video.liveStreamingDetails?.activeLiveChatId;
-    if (!liveChatId) throw new Error("Este video no tiene chat en vivo.");
-    
-    return {
-        liveChatId,
-        titulo: video.snippet?.title || "Sin título",
-        descripcion: video.snippet?.description || "",
-        fechaInicio: video.liveStreamingDetails?.actualStartTime || new Date().toISOString()
-    };
 }
 
 async function getLiveChatId(videoId) {
@@ -362,11 +398,7 @@ function actualizarDiaReality(nuevoTitulo) {
             const diaAnterior = diaActualReality;
             diaActualReality = diaDetectado;
             tituloVideoActual = nuevoTitulo;
-            
-            console.log(`\n🏠 NUEVO DÍA DETECTADO:`);
-            console.log(`📺 Título: "${nuevoTitulo}"`);
-            console.log(`📅 Día anterior: ${diaAnterior} → Nuevo día: ${diaActualReality}`);
-            
+
             // Enviar actualización a todos los clientes WebSocket
             io.emit('dia-actualizado', {
                 diaAnterior: diaAnterior,
@@ -386,20 +418,30 @@ function actualizarDiaReality(nuevoTitulo) {
 }
 
 async function pollChat(liveChatId, pageToken) {
-    const url = new URL("https://www.googleapis.com/youtube/v3/liveChat/messages");
-    url.search = new URLSearchParams({
-        liveChatId,
-        part: "snippet,authorDetails",
-        key: config.youtube.apiKey,
-        pageToken: pageToken || "",
-    });
+    return handleApiRequest(async () => {
+        const url = new URL("https://www.googleapis.com/youtube/v3/liveChat/messages");
+        url.search = new URLSearchParams({
+            liveChatId,
+            part: "snippet,authorDetails",
+            key: getNextApiKey(),
+            pageToken: pageToken || "",
+        });
 
-    const res = await fetch(url);
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Error API: ${res.status} ${text}`);
-    }
-    return res.json();
+        const res = await fetch(url);
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Error API: ${res.status} ${text}`);
+        }
+        
+        const data = await res.json();
+        
+        // Verificar errores de la API
+        if (data.error) {
+            throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
+        }
+        
+        return data;
+    });
 }
 
 // Monitor de Super Chats integrado
@@ -412,26 +454,44 @@ async function iniciarMonitorSuperChats() {
     try {
         console.log('🔄 Iniciando monitor de Super Chats...');
         
-        // Obtener información completa del video
+        // Obtener información del video
         const videoInfo = await getVideoInfo(config.youtube.videoId);
-        const liveChatId = videoInfo.liveChatId;
         
         // Detectar y actualizar el día del reality
         actualizarDiaReality(videoInfo.titulo);
         
         console.log('🎯 Monitor de Super Chats integrado al servidor web');
-        console.log(`📺 Video: "${videoInfo.titulo}"`);
-        console.log(`📅 Día detectado: ${diaActualReality}`);
-        console.log('💰 1 USD = 1 punto | Super Chats sin clasificar se distribuyen entre 10 concursantes');
-        console.log('📊 Concursantes:', Object.values(CONCURSANTES).map(c => c.nombre).join(", "));
-        console.log('🔄 Escuchando Super Chats en tiempo real...\n');
-
+        
         isMonitoringActive = true;
-        let nextPageToken = undefined;
-        let contadorVerificaciones = 0;
 
-        // Base de datos lista - los puntos se gestionan directamente en BD
+        // Base de datos lista
         console.log('✅ Base de datos sincronizada');
+
+        // Función para verificar el título del video
+        const verificarTitulo = async () => {
+            try {
+                const videoInfoActualizada = await getVideoInfo(config.youtube.videoId);
+                const diaActualizado = actualizarDiaReality(videoInfoActualizada.titulo);
+                
+                if (diaActualizado) {
+                    console.log('🔄 Día del reality actualizado automáticamente');
+                }
+            } catch (err) {
+                console.error('⚠️ Error verificando título del video:', err.message);
+            }
+            
+            // Solo programar la próxima verificación si el monitor sigue activo
+            if (isMonitoringActive) {
+                setTimeout(verificarTitulo, 2 * 60 * 60 * 1000); // 2 horas
+            }
+        };
+        
+        // Iniciar verificación periódica (primera verificación inmediata, luego cada 2 horas)
+        verificarTitulo();
+
+        // Obtener el liveChatId del videoInfo
+        const liveChatId = videoInfo.liveChatId;
+        let nextPageToken = null;
 
         while (isMonitoringActive) {
             try {
@@ -451,37 +511,26 @@ async function iniciarMonitorSuperChats() {
                         
                         const montoUSD = Math.round(convertirAUSD(montoOriginal, moneda));
                         
-                        console.log(`\n💥 [SUPERCHAT #${contadorSuperChats}] ${author}: ${montoOriginal} ${moneda} (${montoUSD} USD)`);
-                        console.log(`📝 Mensaje: "${msg}"`);
-                        
-                        if (concursantes.length === 1) {
-                            console.log(`🎯 APOYA A: ${concursantes[0]}`);
-                        } else {
-                            console.log(`🎯 APOYA A: ${concursantes.join(" + ")}`);
-                        }
-                        
+                        // Distribuir puntos entre los concursantes
                         const distribucion = await distribuirPuntos(concursantes, montoUSD);
-                        console.log(`💰 PUNTOS: ${distribucion}`);
                         
+                        // Datos mínimos necesarios para actualizar puntos
                         const superChatData = {
-                            autor: author,
-                            monto: montoOriginal,
-                            moneda: moneda,
                             montoUSD: montoUSD,
-                            mensaje: msg,
                             concursantes: concursantes,
                             distribucion: distribucion
                         };
                         
                         try {
+                            // Actualizar puntos sin guardar el mensaje
                             const superChatId = await guardarSuperChatBD(superChatData);
-                            console.log(`✅ Datos guardados en base de datos`);
                             
                             // Calcular puntos realmente distribuidos
                             const puntosDistribuidos = concursantes.includes("SIN CLASIFICAR") ? 
                                 Math.round(montoUSD / 10) : Math.round(montoUSD / concursantes.length);
                             
                             // Enviar Super Chat via WebSocket a todos los clientes conectados
+                            // (mantenemos esto para la visualización en tiempo real)
                             const superChatParaEnviar = {
                                 id: superChatId,
                                 numero: contadorSuperChats,
@@ -499,36 +548,20 @@ async function iniciarMonitorSuperChats() {
                             };
                             
                             io.emit('nuevo-superchat', superChatParaEnviar);
-                            console.log(`📡 Super Chat enviado a ${clientesConectados} cliente(s) conectado(s)`);
                             
                             // Enviar puntuaciones actualizadas
                             enviarPuntuacionesActualizadas();
                             
                         } catch (err) {
-                            console.error('❌ Error guardando en base de datos:', err.message);
+                            console.error('❌ Error actualizando puntos:', err.message);
                         }
-                        
-                        console.log('-'.repeat(80));
                     }
                 }
 
                 nextPageToken = data.nextPageToken;
-                const waitMs = data.pollingIntervalMillis || config.system.pollingInterval;
                 
-                // Verificar título del video cada 60 iteraciones (aproximadamente cada 5 minutos)
-                contadorVerificaciones++;
-                if (contadorVerificaciones % 60 === 0) {
-                    try {
-                        const videoInfoActualizada = await getVideoInfo(config.youtube.videoId);
-                        const diaActualizado = actualizarDiaReality(videoInfoActualizada.titulo);
-                        
-                        if (diaActualizado) {
-                            console.log('🔄 Día del reality actualizado automáticamente');
-                        }
-                    } catch (err) {
-                        console.error('⚠️ Error verificando título del video:', err.message);
-                    }
-                }
+                // Usar exclusivamente el valor de pollingIntervalMillis que devuelve la API
+                const waitMs = data.pollingIntervalMillis || 5000; // Valor de respaldo de 5 segundos si la API no devuelve un valor
                 
                 await new Promise(r => setTimeout(r, waitMs));
                 
@@ -547,34 +580,72 @@ async function iniciarMonitorSuperChats() {
 // Iniciar servidor
 async function startServer() {
     try {
+        // Verificar API keys antes de iniciar
+        await verificarApiKeys();
+        
         // Inicializar la base de datos MySQL primero
-        console.log('🔄 Inicializando base de datos MySQL...');
         await db.initializeDatabase();
-        console.log('✅ Base de datos MySQL inicializada correctamente');
         
         // Luego iniciar el servidor
         server.listen(PORT, () => {
             console.log('🚀 Servidor Express + WebSocket iniciado');
             console.log(`🌐 Interfaz web en: http://localhost:${PORT}`);
-            console.log(`📡 WebSocket: Tiempo real para Super Chats y puntuaciones`);
-            console.log(`🎯 Eventos WebSocket disponibles:`);
-            console.log(`   nuevo-superchat - Super Chats en tiempo real`);
-            console.log(`   puntuaciones-update - Puntuaciones actualizadas`);
-            console.log(`   estadisticas-update - Estadísticas generales`);
-            console.log(`   monitor-status - Estado del monitor`);
             console.log('🔄 Presiona Ctrl+C para detener el servidor\n');
             
             // Iniciar monitor de Super Chats automáticamente
             setTimeout(() => {
                 iniciarMonitorSuperChats().catch(err => {
                     console.error('❌ Error iniciando monitor de Super Chats:', err.message);
-                    console.log('ℹ️ El servidor web seguirá funcionando sin el monitor');
                 });
             }, 2000); // Esperar 2 segundos para que el servidor esté completamente listo
         });
     } catch (err) {
         console.error('❌ Error al iniciar el servidor:', err);
         process.exit(1);
+    }
+}
+
+// Función para verificar que las API keys sean válidas
+async function verificarApiKeys() {
+    console.log('🔑 Verificando API keys de YouTube...');
+    
+    const apiKeys = config.youtube.apiKeys;
+    if (!apiKeys || apiKeys.length === 0) {
+        throw new Error('No hay API keys configuradas');
+    }
+    
+    // Verificar cada API key
+    let keysValidas = 0;
+    for (let i = 0; i < apiKeys.length; i++) {
+        const apiKey = apiKeys[i];
+        try {
+            // Hacer una solicitud simple para verificar la API key
+            const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+            url.search = new URLSearchParams({
+                part: "snippet",
+                chart: "mostPopular",
+                maxResults: "1",
+                key: apiKey
+            });
+            
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data.error) {
+                console.error(`❌ API key #${i+1} inválida: ${data.error.message}`);
+            } else {
+                console.log(`✅ API key #${i+1} válida`);
+                keysValidas++;
+            }
+        } catch (err) {
+            console.error(`❌ Error verificando API key #${i+1}: ${err.message}`);
+        }
+    }
+    
+    if (keysValidas === 0) {
+        throw new Error('Ninguna API key es válida. Verifica tus claves API de YouTube.');
+    } else {
+        console.log(`✅ ${keysValidas} de ${apiKeys.length} API keys son válidas`);
     }
 }
 

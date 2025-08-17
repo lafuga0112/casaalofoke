@@ -1,8 +1,8 @@
 // Palabras clave para detectar qué concursante apoya cada Super Chat
 // Sistema de puntuación: 1 USD = 1 punto
 const CONCURSANTES = {
-  TRUJILLO: {
-    nombre: "TRUJILLO",
+  GIUSEPPE: {
+    nombre: "GIUSEPPE",
     puntos: 0,
     keywords: [
       "team trujillo",
@@ -17,11 +17,17 @@ const CONCURSANTES = {
       "trujillo el mejor",
       "trujillo y",
       "trujillo,",
-      "trujillo &"
+      "trujillo &",
+      "giuseppe",
+      "team giuseppe",
+      "#teamgiuseppe",
+      "giusepe",
+      "team giusepe",
+      "#teamgiusepe"
     ]
   },
   JIMENEZ: {
-    nombre: "JIMÉNEZ", 
+    nombre: "JIMENEZ", 
     puntos: 0,
     keywords: [
       "team jimenez",

@@ -1,69 +1,114 @@
 // Archivo de depuración temporal
-const API_KEY = 'AIzaSyBBQNhk91YVg6yWJYFxy5GE8OgR8k62pGg';
-const VIDEO_ID = 'gOJvu0xYsdo';
+const config = require('./config');
 
-console.log('🚀 Iniciando script de depuración...');
-console.log('API_KEY:', API_KEY ? '✅ Configurada' : '❌ No configurada');
-console.log('VIDEO_ID:', VIDEO_ID);
+
+// Función para obtener la siguiente API key en rotación
+function getNextApiKey() {
+  const keys = config.youtube.apiKeys;
+  if (!keys || keys.length === 0) {
+    throw new Error('No hay API keys configuradas');
+  }
+  
+  // Incrementar el índice y hacer rotación si es necesario
+  config.youtube.lastKeyIndex = (config.youtube.lastKeyIndex + 1) % keys.length;
+  
+  const apiKey = keys[config.youtube.lastKeyIndex];
+  
+  return apiKey;
+}
+
+// Función para manejar errores de cuota de la API de YouTube
+async function handleApiRequest(requestFn) {
+  const maxRetries = config.youtube.apiKeys.length; // Intentar con todas las API keys disponibles
+  let lastError = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      lastError = error;
+      
+      // Verificar si es un error de cuota
+      if (error.message.includes('quota') || error.message.includes('403')) {
+        // Ya estamos rotando la API key en cada llamada a getNextApiKey
+        continue;
+      }
+      
+      // Si no es un error de cuota, propagar el error
+      throw error;
+    }
+  }
+  
+  // Si llegamos aquí, todas las API keys han fallado
+  throw lastError;
+}
 
 async function getLiveChatId(videoId) {
-  console.log('🔍 Obteniendo Live Chat ID...');
-  const url = new URL("https://www.googleapis.com/youtube/v3/videos");
-  url.search = new URLSearchParams({
-    part: "liveStreamingDetails",
-    id: videoId,
-    key: API_KEY,
-  });
-
-  console.log('📡 URL:', url.toString());
-  const res = await fetch(url);
-  const data = await res.json();
-  console.log('📊 Respuesta completa:', JSON.stringify(data, null, 2));
-
-  if (!data.items?.length) throw new Error("Video no encontrado o no está en vivo.");
-  const liveChatId = data.items[0]?.liveStreamingDetails?.activeLiveChatId;
-  if (!liveChatId) throw new Error("Este video no tiene chat en vivo.");
   
-  console.log('✅ Live Chat ID obtenido:', liveChatId);
-  return liveChatId;
+  return handleApiRequest(async () => {
+    const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+    url.search = new URLSearchParams({
+      part: "liveStreamingDetails",
+      id: videoId,
+      key: getNextApiKey(),
+    });
+
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    // Verificar errores de la API
+    if (data.error) {
+      throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
+    }
+    
+
+    if (!data.items?.length) throw new Error("Video no encontrado o no está en vivo.");
+    const liveChatId = data.items[0]?.liveStreamingDetails?.activeLiveChatId;
+    if (!liveChatId) throw new Error("Este video no tiene chat en vivo.");
+    
+    return liveChatId;
+  });
 }
 
 async function pollChat(liveChatId, pageToken) {
-  console.log('📡 Consultando chat...');
-  const url = new URL("https://www.googleapis.com/youtube/v3/liveChat/messages");
-  url.search = new URLSearchParams({
-    liveChatId,
-    part: "snippet,authorDetails",
-    key: API_KEY,
-    pageToken: pageToken || "",
-  });
-
-  const res = await fetch(url);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Error API: ${res.status} ${text}`);
-  }
   
-  const data = await res.json();
-  console.log('📋 Datos del chat recibidos:', data);
-  return data;
+  return handleApiRequest(async () => {
+    const url = new URL("https://www.googleapis.com/youtube/v3/liveChat/messages");
+    url.search = new URLSearchParams({
+      liveChatId,
+      part: "snippet,authorDetails",
+      key: getNextApiKey(),
+      pageToken: pageToken || "",
+    });
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Error API: ${res.status} ${text}`);
+    }
+    
+    const data = await res.json();
+    
+    // Verificar errores de la API
+    if (data.error) {
+      throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
+    }
+    
+    return data;
+  });
 }
 
 (async () => {
   try {
-    console.log('🎯 Iniciando proceso principal...');
-    const liveChatId = await getLiveChatId(VIDEO_ID);
-    console.log('✅ Escuchando chat en vivo… (Ctrl+C para salir)');
+    const liveChatId = await getLiveChatId(config.youtube.videoId);
 
     let nextPageToken = undefined;
     let iteration = 0;
 
     while (true) {
       iteration++;
-      console.log(`🔄 Iteración #${iteration}...`);
       
       const data = await pollChat(liveChatId, nextPageToken);
-      console.log(`📨 Mensajes recibidos: ${data.items?.length || 0}`);
 
       // Imprimir mensajes
       for (const item of data.items || []) {
@@ -73,7 +118,6 @@ async function pollChat(liveChatId, pageToken) {
         // Mensaje normal de chat
         if (snippet?.type === "textMessageEvent") {
           const text = snippet.textMessageDetails?.messageText || "";
-          console.log(`[CHAT] ${author}: ${text}`);
         }
 
         // Super Chat
@@ -82,18 +126,14 @@ async function pollChat(liveChatId, pageToken) {
           const amount = Number(sc.amountMicros || 0) / 1_000_000;
           const currency = sc.currency || "";
           const msg = sc.userComment || "";
-          console.log(`💥 [SUPERCHAT] ${author}: ${amount} ${currency} — ${msg}`);
         }
       }
 
       nextPageToken = data.nextPageToken;
       const waitMs = data.pollingIntervalMillis || 2000;
-      console.log(`⏰ Esperando ${waitMs}ms...`);
       await new Promise(r => setTimeout(r, waitMs));
     }
   } catch (err) {
-    console.error("❌ Error:", err.message);
-    console.error("Stack:", err.stack);
     process.exit(1);
   }
 })(); 

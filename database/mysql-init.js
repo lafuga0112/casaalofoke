@@ -11,7 +11,8 @@ const dbConfig = {
     database: config.database.database,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    charset: 'utf8mb4' // Soporte para emojis y caracteres especiales
 };
 
 // SQL para crear las tablas
@@ -26,20 +27,20 @@ CREATE TABLE IF NOT EXISTS concursantes (
     instagram_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)`;
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
 
 const createSuperchatsTable = `
 CREATE TABLE IF NOT EXISTS superchats (
     id INT AUTO_INCREMENT PRIMARY KEY,
     autor VARCHAR(100) NOT NULL,
-    mensaje TEXT,
+    mensaje TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     monto_original DECIMAL(10,2) NOT NULL,
     moneda VARCHAR(10) NOT NULL,
     monto_usd DECIMAL(10,2) NOT NULL,
-    concursantes_detectados TEXT,
-    distribucion TEXT,
+    concursantes_detectados TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    distribucion TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)`;
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
 
 const createEstadisticasTable = `
 CREATE TABLE IF NOT EXISTS estadisticas (
@@ -47,11 +48,14 @@ CREATE TABLE IF NOT EXISTS estadisticas (
     total_superchats INT DEFAULT 0,
     total_puntos_reales DECIMAL(10,2) DEFAULT 0,
     total_puntos_mostrados INT DEFAULT 0,
-    ultimo_superchat_id INT,
     fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (ultimo_superchat_id) REFERENCES superchats(id)
-)`;
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
+
+// Configurar la base de datos para usar UTF-8mb4
+const setDatabaseCharset = `
+ALTER DATABASE ${config.database.database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+`;
 
 const insertEstadisticasIniciales = `
 INSERT IGNORE INTO estadisticas (id, fecha_inicio) VALUES (1, NOW())
@@ -63,28 +67,31 @@ let pool;
 // Inicializar la base de datos
 async function initializeDatabase() {
     try {
-        console.log('🔄 Inicializando conexión a MySQL...');
-        console.log(`🌐 Host: ${config.database.host}:${config.database.port}`);
-        console.log(`📊 Base de datos: ${config.database.database}`);
+
         
         // Crear el pool de conexiones
         pool = mysql.createPool(dbConfig);
         
         // Verificar conexión
         const connection = await pool.getConnection();
-        console.log('✅ Conexión a MySQL establecida correctamente');
+        
+        // Configurar la base de datos para usar UTF-8mb4
+        try {
+            await connection.query(setDatabaseCharset);
+        } catch (err) {
+            console.warn('⚠️ No se pudo configurar el charset de la base de datos:', err.message);
+            console.warn('⚠️ Algunas características como emojis pueden no funcionar correctamente');
+        }
+        
         connection.release();
         
         // Crear tablas
-        console.log('🔄 Creando tablas si no existen...');
         await pool.query(createConcursantesTable);
-        await pool.query(createSuperchatsTable);
+        // Ya no creamos la tabla superchats
         await pool.query(createEstadisticasTable);
         await pool.query(insertEstadisticasIniciales);
-        console.log('✅ Tablas creadas exitosamente');
         
         // Insertar concursantes iniciales
-        console.log('🔄 Verificando concursantes...');
         
         // URLs de Instagram (actualizar con las reales)
         const instagramUrls = {
@@ -115,8 +122,7 @@ async function initializeDatabase() {
             }
         }
         
-        console.log('✅ Concursantes verificados exitosamente');
-        console.log('🎯 Base de datos MySQL lista para usar');
+
         
         return pool;
     } catch (err) {
@@ -152,7 +158,6 @@ async function query(sql, params = []) {
 if (require.main === module) {
     initializeDatabase()
         .then(() => {
-            console.log('✅ Base de datos MySQL inicializada correctamente');
             process.exit(0);
         })
         .catch((err) => {

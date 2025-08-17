@@ -24,8 +24,8 @@
                 </div>
                 <div class="social-links">
                     <a href="https://www.instagram.com/casaalofoke/" target="_blank" class="social-header-link instagram">
-                        <img src="images/ig.webp" alt="Instagram" class="social-header-icon">
-                        <span class="social-header-text">@alofokeradioshow</span>
+                        <img src="images/ig.png" alt="Instagram" class="social-header-icon">
+                        <span class="social-header-text">@casaalofoke</span>
                     </a>
                     <a href="https://www.youtube.com/watch?app=desktop&v=gOJvu0xYsdo&fbclid=PAZXh0bgNhZW0CMTEAAaeucH45DPPbuwn5_nzesxOrArvYTOJWZbaATMYH-nwcS3XmuLiTHjP4lZ8EFg_aem_fzVrWP8OPCdZxhL7yXspLg" target="_blank" class="social-header-link youtube">
                         <img src="images/yt.png" alt="YouTube" class="social-header-icon">
@@ -50,7 +50,7 @@
                     <div class="contestant-score" id="score-gigi">0PTS</div>
                 </div>
 
-                <!-- GIUSEPPE -->
+                <!-- GIUSEPPE/TRUJILLO -->
                 <div class="contestant-card">
                     <div class="contestant-name">GIUSEPPE</div>
                     <div class="contestant-photo">
@@ -72,16 +72,16 @@
                 <div class="contestant-card">
                     <div class="contestant-name">CRAZY</div>
                     <div class="contestant-photo">
-                        <img src="images/crazy.jpg" alt="CRAZY" class="profile-img" onclick="openContestantProfile('crazy')">
+                        <img src="images/CRAZY.jpg" alt="CRAZY" class="profile-img" onclick="openContestantProfile('crazy')">
                     </div>
                     <div class="contestant-score" id="score-crazy">0PTS</div>
                 </div>
 
                 <!-- Pamela -->
                 <div class="contestant-card">
-                    <div class="contestant-name">Pamela</div>
+                    <div class="contestant-name">PAMELA</div>
                     <div class="contestant-photo">
-                        <img src="images/pamela.jpg" alt="Pamela" class="profile-img" onclick="openContestantProfile('pamela')">
+                        <img src="images/pamela.jpg" alt="PAMELA" class="profile-img" onclick="openContestantProfile('pamela')">
                     </div>
                     <div class="contestant-score" id="score-pamela">0PTS</div>
                 </div>
@@ -99,7 +99,7 @@
                 <div class="contestant-card">
                     <div class="contestant-name">JIMENEZ</div>
                     <div class="contestant-photo">
-                        <img src="images/jimenez.jpg" alt="JIMENEZ" class="profile-img" onclick="openContestantProfile('jimenez')">
+                        <img src="images/JIMENEZ.jpg" alt="JIMENEZ" class="profile-img" onclick="openContestantProfile('jimenez')">
                     </div>
                     <div class="contestant-score" id="score-jiménez">0PTS</div>
                 </div>
@@ -117,7 +117,7 @@
                 <div class="contestant-card">
                     <div class="contestant-name">CRUSITA</div>
                     <div class="contestant-photo">
-                        <img src="images/crusita.jpg" alt="CRUSITA" class="profile-img" onclick="openContestantProfile('crusita')">
+                        <img src="images/CRUSITA.jpg" alt="CRUSITA" class="profile-img" onclick="openContestantProfile('crusita')">
                     </div>
                     <div class="contestant-score" id="score-crusita">0PTS</div>
                 </div>
@@ -130,24 +130,6 @@
                     </div>
                     <div class="contestant-score" id="score-luise">0PTS</div>
                 </div>
-
-                <!-- GIUSEPPE -->
-                <div class="contestant-card">
-                    <div class="contestant-name">GIUSEPPE</div>
-                    <div class="contestant-photo">
-                        <img src="images/GIUSEPPE.jpg" alt="GIUSEPPE" class="profile-img" onclick="openContestantProfile('giuseppe')">
-                    </div>
-                    <div class="contestant-score" id="score-giuseppe">0PTS</div>
-                </div>
-
-                <!-- TRUJILLO -->
-                <div class="contestant-card">
-                    <div class="contestant-name">Giusepe</div>
-                    <div class="contestant-photo">
-                        <img src="images/giuseppe.jpg" alt="TRUJILLO" class="profile-img" onclick="openContestantProfile('trujillo')">
-                    </div>
-                    <div class="contestant-score" id="score-trujillo">0PTS</div>
-                </div>
             </div>
             
             <!-- Leyenda del Sistema de Puntuación -->
@@ -158,7 +140,7 @@
                 <div class="legend-content">
                     <div class="legend-item">
                         <span class="legend-label">Contabilización desde:</span>
-                        <span class="legend-value">12 de Agosto, 2025 - 8:00 PM</span>
+                        <span class="legend-value">13 de Agosto, 2025 - 12:20 AM</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-label">Última actualización:</span>
@@ -175,19 +157,6 @@
                             Los resultados pueden no reflejar la puntuación real del reality show.
                         </span>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Panel de Chat en Tiempo Real -->
-        <section class="chat-panel">
-            <div class="chat-header"> 
-                <h2>PUNTOS EN TIEMPO REAL</h2>
-            </div>
-            
-            <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <!-- Los mensajes del chat se cargarán dinámicamente aquí -->
                 </div>
             </div>
         </section>
@@ -219,22 +188,6 @@
             } else {
                 console.log('❌ WebSocket no conectado, no se pueden obtener puntuaciones');
             }
-        }
-
-        // Función para mostrar mensajes del chat
-        function addChatMessage(message) {
-            const chatContainer = document.getElementById('chatMessages');
-            const messageElement = document.createElement('div');
-            messageElement.className = 'chat-message';
-            messageElement.innerHTML = `
-                <span class="message-author">${message.author}</span>
-                <span class="message-text">${message.text}</span>
-                <span class="message-time">${message.time}</span>
-            `;
-            chatContainer.appendChild(messageElement);
-            
-            // Auto-scroll al último mensaje
-            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         // Links de Instagram de los concursantes
@@ -324,13 +277,6 @@
             console.log('🔌 Desconectado del servidor WebSocket');
         });
         
-        socket.on('nuevo-superchat', (superChat) => {
-            console.log('💥 Nuevo Super Chat recibido:', superChat);
-            mostrarSuperChatEnChat(superChat);
-            // Animar las cards de los concursantes que recibieron puntos
-            animarConcursantesQueRecibieronPuntos(superChat.puntosAsignados);
-        });
-        
         socket.on('puntuaciones-update', (data) => {
             console.log('📊 Puntuaciones actualizadas via WebSocket');
             if (data.success) {
@@ -360,61 +306,6 @@
                 actualizarDiaEnHeader(status.diaActual, status.tituloVideo);
             }
         });
-        
-        // Función para mostrar Super Chat en el panel de chat
-        function mostrarSuperChatEnChat(superChat) {
-            const chatContainer = document.getElementById('chatMessages');
-            if (!chatContainer) return;
-            
-            const messageElement = document.createElement('div');
-            
-            // Determinar la clase según el monto USD
-            let tierClass = 'tier-low';
-            if (superChat.montoUSD >= 100) {
-                tierClass = 'tier-ultra';
-            } else if (superChat.montoUSD >= 50) {
-                tierClass = 'tier-high';
-            } else if (superChat.montoUSD >= 20) {
-                tierClass = 'tier-medium';
-            }
-            
-            messageElement.className = `super-chat-message ${tierClass}`;
-            
-            // Determinar texto de concursantes y puntos
-            let concursantesTexto;
-            let puntosPorConcursante;
-            
-            if (superChat.concursantes.includes('SIN CLASIFICAR')) {
-                // Para SIN CLASIFICAR: puntos se dividen entre 10 participantes
-                puntosPorConcursante = Math.round(superChat.montoUSD / 10);
-                concursantesTexto = 'Todos los participantes';
-            } else {
-                // Para concursantes específicos
-                puntosPorConcursante = Math.round(superChat.montoUSD / superChat.concursantes.length);
-                concursantesTexto = superChat.concursantes.join(' + ');
-            }
-            
-            messageElement.innerHTML = `
-                <div class="super-chat-header">
-                    <span class="super-chat-author">${superChat.autor}</span>
-                    <span class="super-chat-amount">${superChat.montoOriginal} ${superChat.moneda} (${superChat.montoUSD} USD)</span>
-                </div>
-                <div class="super-chat-message-text">"${superChat.mensaje}"</div>
-                <div class="super-chat-points">
-                    <span class="points-info">${concursantesTexto} +${puntosPorConcursante}PTS</span>
-                    <span class="super-chat-time">${new Date(superChat.timestamp).toLocaleTimeString('es-DO')}</span>
-                </div>
-            `;
-            
-            chatContainer.appendChild(messageElement);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            
-            // Limitar a los últimos 50 mensajes
-            const messages = chatContainer.children;
-            if (messages.length > 50) {
-                chatContainer.removeChild(messages[0]);
-            }
-        }
         
         // Función para actualizar estadísticas del panel
         function actualizarEstadisticasPanel(stats) {
@@ -448,8 +339,6 @@
             
             // Notificación eliminada - solo actualiza silenciosamente
         }
-        
-
         
         // Función para animar concursantes que recibieron puntos
         function animarConcursantesQueRecibieronPuntos(concursantesNombres) {
