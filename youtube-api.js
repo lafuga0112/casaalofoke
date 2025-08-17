@@ -4,8 +4,8 @@
  * para evitar duplicación de código y peticiones
  */
 const config = require('./config');
-// Importar fetch correctamente para Node.js
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+// Importar axios en lugar de fetch
+const axios = require('axios');
 const db = require('./database/mysql-init');
 
 // Variable para almacenar el último ID de chat en vivo obtenido
@@ -198,8 +198,8 @@ async function verificarApiKeys() {
                 key: apiKey
             });
             
-            const res = await fetch(url);
-            const data = await res.json();
+            const res = await axios.get(url.toString());
+            const data = res.data;
             
             if (data.error) {
                 console.error(`❌ API key #${i+1} inválida: ${data.error.message}`);
@@ -250,8 +250,8 @@ async function getVideoInfo(videoId) {
             key: getNextApiKey(),
         });
 
-        const res = await fetch(url);
-        const data = await res.json();
+        const res = await axios.get(url.toString());
+        const data = res.data;
         
         // Verificar errores de la API
         if (data.error) {
@@ -307,23 +307,24 @@ async function pollChat(liveChatId, pageToken) {
             maxResults: "200" // Solicitar el máximo de mensajes posible
         });
 
-        const res = await fetch(url);
-        
-        if (!res.ok) {
-            const text = await res.text();
-            console.error(`❌ Error en respuesta HTTP: ${res.status}`);
-            throw new Error(`Error API: ${res.status} ${text}`);
+        try {
+            const res = await axios.get(url.toString());
+            const data = res.data;
+            
+            // Verificar errores de la API
+            if (data.error) {
+                console.error(`❌ Error en respuesta API: ${data.error.code} ${data.error.message}`);
+                throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
+            }
+            
+            return data;
+        } catch (error) {
+            if (error.response) {
+                console.error(`❌ Error en respuesta HTTP: ${error.response.status}`);
+                throw new Error(`Error API: ${error.response.status} ${JSON.stringify(error.response.data)}`);
+            }
+            throw error;
         }
-        
-        const data = await res.json();
-        
-        // Verificar errores de la API
-        if (data.error) {
-            console.error(`❌ Error en respuesta API: ${data.error.code} ${data.error.message}`);
-            throw new Error(`Error API: ${data.error.code} ${data.error.message}`);
-        }
-        
-        return data;
     });
 }
 

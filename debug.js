@@ -1,6 +1,6 @@
 // Archivo de depuración temporal
 const config = require('./config');
-
+const axios = require('axios');
 
 // Función para obtener la siguiente API key en rotación
 function getNextApiKey() {
@@ -53,8 +53,8 @@ async function getLiveChatId(videoId) {
       key: getNextApiKey(),
     });
 
-    const res = await fetch(url);
-    const data = await res.json();
+    const res = await axios.get(url.toString());
+    const data = res.data;
     
     // Verificar errores de la API
     if (data.error) {
@@ -81,13 +81,8 @@ async function pollChat(liveChatId, pageToken) {
       pageToken: pageToken || "",
     });
 
-    const res = await fetch(url);
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Error API: ${res.status} ${text}`);
-    }
-    
-    const data = await res.json();
+    const res = await axios.get(url.toString());
+    const data = res.data;
     
     // Verificar errores de la API
     if (data.error) {

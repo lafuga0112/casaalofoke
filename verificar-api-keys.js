@@ -2,7 +2,7 @@
  * Script para verificar las claves API de YouTube
  * Ejecutar con: node verificar-api-keys.js
  */
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const axios = require('axios');
 const config = require('./config');
 
 // Función para verificar que las API keys sean válidas
@@ -33,8 +33,8 @@ async function verificarApiKeys() {
             
             console.log(`🔄 Verificando API key #${i+1}: ${apiKey.substring(0, 8)}...`);
             
-            const res = await fetch(url);
-            const data = await res.json();
+            const res = await axios.get(url.toString());
+            const data = res.data;
             
             if (data.error) {
                 console.error(`❌ API key #${i+1} inválida: ${data.error.message}`);

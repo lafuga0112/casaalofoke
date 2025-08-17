@@ -132,6 +132,7 @@
         </table>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             loadApiKeys();
@@ -143,9 +144,9 @@
         });
         
         function loadApiKeys() {
-            fetch('/api/keys')
-                .then(response => response.json())
-                .then(data => {
+            axios.get('/api/keys')
+                .then(response => {
+                    const data = response.data;
                     if (data.success) {
                         displayApiKeys(data.data);
                     } else {
@@ -192,15 +193,11 @@
                 return;
             }
             
-            fetch('/api/keys', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ api_key: apiKey })
+            axios.post('/api/keys', {
+                api_key: apiKey
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(response => {
+                const data = response.data;
                 if (data.success) {
                     document.getElementById('api-key').value = '';
                     loadApiKeys();
@@ -216,15 +213,11 @@
         }
         
         function toggleApiKey(id, active) {
-            fetch(`/api/keys/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ is_active: active })
+            axios.put(`/api/keys/${id}`, {
+                is_active: active
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(response => {
+                const data = response.data;
                 if (data.success) {
                     loadApiKeys();
                 } else {
@@ -242,11 +235,9 @@
                 return;
             }
             
-            fetch(`/api/keys/${id}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
+            axios.delete(`/api/keys/${id}`)
+            .then(response => {
+                const data = response.data;
                 if (data.success) {
                     loadApiKeys();
                     alert('Clave API eliminada correctamente');
