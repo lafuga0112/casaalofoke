@@ -10,7 +10,7 @@ const db = require('./database/mysql-init');
 
 // Importar funciones del monitor de Super Chats
 const { CONCURSANTES } = require('./keywords.js');
-const { TASAS_CONVERSION } = require('./conversiones.js');
+const { cargarTasasConversionAlInicio, convertirAUSD } = require('./conversiones.js');
 
 // Importar el módulo de la API de YouTube
 const youtubeApi = require('./youtube-api');
@@ -59,10 +59,7 @@ io.on('connection', (socket) => {
 // Función eliminada - ya no necesitamos estadísticas
 
 // Funciones del monitor de Super Chats
-function convertirAUSD(monto, moneda) {
-    const tasa = TASAS_CONVERSION[moneda] || 1.0;
-    return monto * tasa;
-}
+// convertirAUSD ahora se importa desde conversiones.js
 
 function detectarConcursantes(mensaje) {
     const mensajeLower = mensaje.toLowerCase();
@@ -155,10 +152,9 @@ app.use(express.static('.')); // Servir archivos estáticos desde la raíz
 // Rutas para archivos estáticos
 app.use('/images', express.static('images'));
 
-// Ruta para la página de administración
-// app.get('/admin', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'admin.html'));
-// });
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
 
 // Rutas para la administración de claves API
 app.get('/api/keys', async (req, res) => {
@@ -289,9 +285,9 @@ app.get('/', (req, res) => {
 });
 
 // Servir la página de administración
-// app.get('/admin', (req, res) => {
-//     res.sendFile(path.join(__dirname, 'admin.html'));
-// });
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
@@ -543,7 +539,7 @@ async function iniciarMonitorSuperChats() {
                             
                             // Enviar puntuaciones actualizadas a todos los clientes
                             enviarPuntuacionesActualizadas();
-                            console.log(`✅ [PRODUCCIÓN] Puntuaciones enviadas a todos los clientes conectados`);
+                            console.log(`✅ [PRODUCCIÓN] Puntuaciones actualizadas y enviadas a todos los clientes`);
                             
                         } catch (err) {
                             console.error('❌ Error procesando SuperChat:', err.message);
@@ -576,6 +572,10 @@ async function startServer() {
         // Inicializar la base de datos MySQL primero
         await db.initializeDatabase();
         
+        // Cargar las tasas de conversión de moneda online
+        console.log('💱 Cargando tasas de conversión de moneda...');
+        await cargarTasasConversionAlInicio();
+        
         // Cargar las claves API desde la base de datos
         await youtubeApi.cargarApiKeys();
         
@@ -588,6 +588,9 @@ async function startServer() {
             console.log(`🌐 Interfaz web en: http://localhost:${PORT}`);
             console.log('🔄 Presiona Ctrl+C para detener el servidor\n');
             
+            // Iniciar el sistema de reintento automático de API keys
+            youtubeApi.iniciarSistemaReintento();
+            
             // Iniciar monitor de Super Chats automáticamente solo si hay API keys válidas
             if (apiKeysValidas) {
                 setTimeout(() => {
@@ -598,6 +601,7 @@ async function startServer() {
             } else {
                 console.error('❌ No hay claves API válidas disponibles. Por favor, agrega claves API válidas en la página de administración.');
                 console.log('⚠️ El servidor está funcionando pero sin monitoreo de SuperChats.');
+                console.log('💡 El sistema de reintento automático intentará reactivar API keys cada 30 minutos.');
             }
         });
     } catch (err) {
@@ -605,6 +609,19 @@ async function startServer() {
         process.exit(1);
     }
 }
+
+// Manejar cierre del servidor
+process.on('SIGINT', () => {
+    console.log('\n🛑 Deteniendo servidor...');
+    youtubeApi.detenerSistemaReintento();
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\n🛑 Deteniendo servidor...');
+    youtubeApi.detenerSistemaReintento();
+    process.exit(0);
+});
 
 module.exports = app;
 

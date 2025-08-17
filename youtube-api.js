@@ -16,6 +16,10 @@ let cachedVideoInfo = null;
 let apiKeys = [];
 let lastKeyIndex = -1;
 
+// Variables para el sistema de reintento automático
+let intervalReintento = null;
+const INTERVALO_REINTENTO = 30 * 60 * 1000; // 30 minutos en milisegundos
+
 // Función para obtener la siguiente API key en rotación
 function getNextApiKey() {
     if (!apiKeys || apiKeys.length === 0) {
@@ -110,6 +114,117 @@ async function cargarApiKeys() {
     } catch (err) {
         console.error('❌ Error cargando claves API:', err.message);
         apiKeys = [];
+    }
+}
+
+// Función para reactivar automáticamente API keys deshabilitadas
+async function reactivarApiKeysDeshabilitadas() {
+    try {
+        if (!db.isInitialized()) {
+            console.warn('⚠️ Base de datos no inicializada, no se pueden reactivar API keys');
+            return;
+        }
+        
+        console.log('🔄 Iniciando reactivación automática de API keys...');
+        
+        // Obtener todas las API keys inactivas
+        const apiKeysInactivas = await db.query(
+            `SELECT id, api_key FROM api_keys WHERE is_active = FALSE ORDER BY id ASC`
+        );
+        
+        if (!apiKeysInactivas || apiKeysInactivas.length === 0) {
+            console.log('✅ No hay API keys inactivas para reactivar');
+            return;
+        }
+        
+        console.log(`🔍 Encontradas ${apiKeysInactivas.length} API keys inactivas. Verificando...`);
+        
+        let reactivadas = 0;
+        
+        // Probar cada API key inactiva
+        for (const keyData of apiKeysInactivas) {
+            try {
+                console.log(`🧪 Probando API key ID ${keyData.id}...`);
+                
+                // Hacer una petición de prueba simple (obtener información de un video público)
+                const testUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=dQw4w9WgXcQ&key=${keyData.api_key}`;
+                
+                const response = await axios.get(testUrl, {
+                    timeout: 10000 // 10 segundos timeout
+                });
+                
+                if (response.data && !response.data.error) {
+                    // La API key funciona, reactivarla
+                    await db.query(
+                        `UPDATE api_keys SET is_active = TRUE, updated_at = NOW() WHERE id = ?`,
+                        [keyData.id]
+                    );
+                    
+                    reactivadas++;
+                    console.log(`✅ API key ID ${keyData.id} reactivada exitosamente`);
+                } else {
+                    console.log(`⚠️ API key ID ${keyData.id} aún tiene problemas`);
+                }
+                
+            } catch (error) {
+                // Si hay error 403 (quota exceeded), la key sigue bloqueada
+                if (error.response && error.response.status === 403) {
+                    console.log(`⏳ API key ID ${keyData.id} aún excede cuota (403)`);
+                } else {
+                    console.log(`❌ API key ID ${keyData.id} falló: ${error.message}`);
+                }
+            }
+            
+            // Esperar un poco entre pruebas para no sobrecargar
+            await sleep(1000);
+        }
+        
+        if (reactivadas > 0) {
+            console.log(`🎉 ${reactivadas} API keys reactivadas exitosamente`);
+            
+            // Recargar las API keys activas
+            await cargarApiKeys();
+            
+            console.log(`📊 Total de API keys activas ahora: ${apiKeys.length}`);
+        } else {
+            console.log('⏳ Ninguna API key pudo ser reactivada aún');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error en reactivación automática:', error.message);
+    }
+}
+
+// Función para iniciar el sistema de reintento automático
+function iniciarSistemaReintento() {
+    // Limpiar intervalo anterior si existe
+    if (intervalReintento) {
+        clearInterval(intervalReintento);
+    }
+    
+    console.log('⏰ Sistema de reintento automático iniciado (cada 30 minutos)');
+    
+    // Configurar intervalo para ejecutar cada 30 minutos
+    intervalReintento = setInterval(async () => {
+        console.log('\n🔄 [REINTENTO AUTOMÁTICO] Ejecutando reactivación de API keys...');
+        await reactivarApiKeysDeshabilitadas();
+        console.log('🔄 [REINTENTO AUTOMÁTICO] Completado\n');
+    }, INTERVALO_REINTENTO);
+    
+    // También ejecutar una vez inmediatamente (después de 2 minutos para dar tiempo al servidor)
+    setTimeout(async () => {
+        console.log('\n🚀 [REINTENTO INICIAL] Ejecutando primera reactivación...');
+        await reactivarApiKeysDeshabilitadas();
+        console.log('🚀 [REINTENTO INICIAL] Completado\n');
+    }, 2 * 60 * 1000); // 2 minutos
+}
+
+// Función para detener el sistema de reintento
+function detenerSistemaReintento() {
+    if (intervalReintento) {
+        clearInterval(intervalReintento);
+        intervalReintento = null;
+        console.log('⏹️ Sistema de reintento automático detenido');
     }
 }
 
@@ -338,5 +453,8 @@ module.exports = {
     verificarApiKeys,
     cargarApiKeys,
     actualizarUsoApiKey,
-    marcarApiKeyInactiva
+    marcarApiKeyInactiva,
+    reactivarApiKeysDeshabilitadas,
+    iniciarSistemaReintento,
+    detenerSistemaReintento
 }; 
