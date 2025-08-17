@@ -163,18 +163,21 @@
             const tbody = document.getElementById('api-keys-body');
             tbody.innerHTML = '';
             
+            // Obtener la fecha y hora actual
+            const currentDateTime = new Date().toLocaleString();
+            
             keys.forEach(key => {
                 const row = document.createElement('tr');
                 
                 const lastUsed = key.last_used ? new Date(key.last_used).toLocaleString() : 'Nunca';
-                const updated = new Date(key.updated_at).toLocaleString();
+                // Usar la fecha y hora actual para la última actualización
                 
                 row.innerHTML = `
                     <td>${key.id}</td>
                     <td>${key.api_key}</td>
                     <td class="${key.is_active ? 'active' : 'inactive'}">${key.is_active ? 'Activa' : 'Inactiva'}</td>
                     <td>${key.quota_used} peticiones</td>
-                    <td>${updated}</td>
+                    <td>${currentDateTime}</td>
                     <td class="actions">
                         <button class="button toggle" onclick="toggleApiKey(${key.id}, ${!key.is_active})">${key.is_active ? 'Desactivar' : 'Activar'}</button>
                         <button class="button delete" onclick="deleteApiKey(${key.id})">Eliminar</button>

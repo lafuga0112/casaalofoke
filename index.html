@@ -290,6 +290,8 @@
                         scoreElement.textContent = `${Math.round(concursante.puntos_reales)}PTS`;
                     }
                 });
+                // Actualizar la hora de última actualización cuando se reciben nuevas puntuaciones
+                updateLastUpdateTime();
             }
         });
         
@@ -304,7 +306,6 @@
         });
         
         socket.on('monitor-status', (status) => {
-            console.log('📊 Estado del monitor:', status);
             if (status.diaActual) {
                 actualizarDiaEnHeader(status.diaActual, status.tituloVideo);
             }
@@ -312,8 +313,6 @@
         
         // Función para actualizar estadísticas del panel
         function actualizarEstadisticasPanel(stats) {
-            // Ya no hay footer que actualizar, las estadísticas se manejan solo por WebSocket
-            console.log('📈 Estadísticas recibidas:', stats);
         }
         
         // Función para actualizar el día en el header
@@ -337,7 +336,6 @@
             
             // Opcional: actualizar el título en la consola para debug
             if (titulo) {
-                console.log(`🎬 Título del video: "${titulo}"`);
             }
             
             // Notificación eliminada - solo actualiza silenciosamente
