@@ -27,7 +27,6 @@ const PORT = config.server.port;
 
 // Variables globales para el monitor de Super Chats
 let isMonitoringActive = false;
-let contadorSuperChats = 0;
 let clientesConectados = 0;
 let diaActualReality = 1; // Día por defecto
 let tituloVideoActual = "";
@@ -39,14 +38,12 @@ io.on('connection', (socket) => {
     // Enviar estado inicial al cliente
     socket.emit('monitor-status', {
         isActive: isMonitoringActive,
-        totalSuperChats: contadorSuperChats,
         diaActual: diaActualReality,
         tituloVideo: tituloVideoActual,
         timestamp: new Date().toISOString()
     });
     
-    // Enviar estadísticas y puntuaciones iniciales
-    obtenerEstadisticasParaSocket(socket);
+    // Enviar puntuaciones iniciales
     enviarPuntuacionesACliente(socket);
     
     socket.on('disconnect', () => {
@@ -59,35 +56,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Función para obtener y enviar estadísticas via socket
-async function obtenerEstadisticasParaSocket(socket) {
-    try {
-        const query = `
-            SELECT 
-                total_superchats,
-                total_puntos_reales,
-                total_puntos_mostrados,
-                fecha_inicio,
-                updated_at
-            FROM estadisticas
-            WHERE id = 1
-        `;
-        
-        const row = await db.query(query);
-        
-        if (row && row.length > 0) {
-            socket.emit('estadisticas-update', {
-                totalSuperChats: row[0].total_superchats || 0,
-                totalPuntosReales: row[0].total_puntos_reales || 0,
-                totalPuntosMostrados: row[0].total_puntos_mostrados || 0,
-                ultimoSuperChat: null, // Ya no tenemos esta información
-                timestamp: new Date().toISOString()
-            });
-        }
-    } catch (err) {
-        console.error('❌ Error obteniendo estadísticas:', err.message);
-    }
-}
+// Función eliminada - ya no necesitamos estadísticas
 
 // Funciones del monitor de Super Chats
 function convertirAUSD(monto, moneda) {
@@ -133,6 +102,7 @@ async function distribuirPuntos(concursantes, puntosUSD) {
                 );
             }
             
+            console.log(`✅ [PRODUCCIÓN] Distribuidos ${puntosPorConcursante} puntos a cada uno de los 10 concursantes`);
             return `Distribuido entre los 10 concursantes (${puntosPorConcursante} puntos cada uno)`;
             
         } else {
@@ -149,6 +119,7 @@ async function distribuirPuntos(concursantes, puntosUSD) {
                 );
             }
             
+            console.log(`✅ [PRODUCCIÓN] Distribuidos ${puntosPorConcursante} puntos a ${concursantes.join(', ')}`);
             return `Distribuido entre ${concursantes.length} concursante(s) (${puntosPorConcursante} puntos cada uno)`;
         }
     } catch (err) {
@@ -159,52 +130,9 @@ async function distribuirPuntos(concursantes, puntosUSD) {
 
 
 
-async function guardarSuperChatBD(superChatData) {
-    try {
-        // Generamos un ID único para el frontend
-        const superChatId = Date.now();
-        
-        // Actualizar estadísticas
-        await db.query(
-            `UPDATE estadisticas 
-            SET total_superchats = total_superchats + 1,
-                updated_at = NOW()
-            WHERE id = 1`
-        );
-        
-        return superChatId;
-    } catch (err) {
-        console.error('❌ Error actualizando puntos:', err.message);
-        throw err;
-    }
-}
+// Función eliminada - no guardamos SuperChats individuales ni estadísticas
 
-// Función para actualizar el total de puntos en la tabla estadisticas
-async function actualizarTotalPuntos() {
-    try {
-        // Calcular totales desde la base de datos
-        const [totales] = await db.query(
-            `SELECT SUM(puntos_reales) as total_reales, 
-                    SUM(puntos_mostrados) as total_mostrados
-            FROM concursantes`
-        );
-        
-        // Actualizar estadísticas
-        await db.query(
-            `UPDATE estadisticas 
-            SET total_puntos_reales = ?,
-                total_puntos_mostrados = ?,
-                updated_at = NOW()
-            WHERE id = 1`,
-            [
-                totales[0]?.total_reales || 0,
-                totales[0]?.total_mostrados || 0
-            ]
-        );
-    } catch (err) {
-        console.error('❌ Error actualizando total de puntos:', err.message);
-    }
-}
+// Función eliminada - no necesitamos totales en estadísticas
 
 // Middlewares
 app.use(cors());
@@ -562,13 +490,12 @@ async function iniciarMonitorSuperChats() {
                     const snippet = item.snippet;
 
                     if (snippet?.superChatDetails) {
-                        contadorSuperChats++;
                         const sc = snippet.superChatDetails;
                         const montoOriginal = Number(sc.amountMicros || 0) / 1_000_000;
                         const moneda = sc.currency || "";
                         const msg = sc.userComment || "";
                         
-                        console.log(`💸 SuperChat #${contadorSuperChats} de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
+                        console.log(`💸 SuperChat de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
                         
                         const concursantes = detectarConcursantes(msg);
                         console.log(`👥 Concursantes detectados: ${concursantes.join(', ') || 'Ninguno'}`);
@@ -576,30 +503,18 @@ async function iniciarMonitorSuperChats() {
                         const montoUSD = Math.round(convertirAUSD(montoOriginal, moneda));
                         console.log(`💵 Monto en USD: $${montoUSD}`);
                         
-                        // Distribuir puntos entre los concursantes
-                        const distribucion = await distribuirPuntos(concursantes, montoUSD);
-                        console.log(`📊 Distribución de puntos: ${distribucion}`);
-                        
-                        // Datos mínimos necesarios para actualizar puntos
-                        const superChatData = {
-                            montoUSD: montoUSD,
-                            concursantes: concursantes,
-                            distribucion: distribucion
-                        };
-                        
                         try {
-                            // Actualizar puntos sin guardar el mensaje
-                            const superChatId = await guardarSuperChatBD(superChatData);
+                            // Solo distribuir puntos - no guardar nada más
+                            const distribucion = await distribuirPuntos(concursantes, montoUSD);
+                            console.log(`📊 Distribución de puntos: ${distribucion}`);
                             
                             // Calcular puntos realmente distribuidos
                             const puntosDistribuidos = concursantes.includes("SIN CLASIFICAR") ? 
                                 Math.round(montoUSD / 10) : Math.round(montoUSD / concursantes.length);
                             
-                            // Enviar Super Chat via WebSocket a todos los clientes conectados
-                            // (mantenemos esto para la visualización en tiempo real)
+                            // Enviar SuperChat via WebSocket para visualización
                             const superChatParaEnviar = {
-                                id: superChatId,
-                                numero: contadorSuperChats,
+                                id: Date.now(),
                                 autor: author,
                                 mensaje: msg,
                                 montoOriginal: montoOriginal,
@@ -608,21 +523,17 @@ async function iniciarMonitorSuperChats() {
                                 puntosDistribuidos: puntosDistribuidos,
                                 concursantes: concursantes,
                                 distribucion: distribucion,
-                                puntosAsignados: concursantes.includes("SIN CLASIFICAR") ? 
-                                    Object.values(CONCURSANTES).map(c => c.nombre) : concursantes,
                                 timestamp: new Date().toISOString()
                             };
                             
                             io.emit('nuevo-superchat', superChatParaEnviar);
                             
-                            // Actualizar el total de puntos en estadisticas
-                            await actualizarTotalPuntos();
-                            
-                            // Enviar puntuaciones actualizadas
+                            // Enviar puntuaciones actualizadas a todos los clientes
                             enviarPuntuacionesActualizadas();
+                            console.log(`✅ [PRODUCCIÓN] Puntuaciones enviadas a todos los clientes conectados`);
                             
                         } catch (err) {
-                            console.error('❌ Error actualizando puntos:', err.message);
+                            console.error('❌ Error procesando SuperChat:', err.message);
                         }
                     }
                 }

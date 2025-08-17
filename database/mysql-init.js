@@ -29,16 +29,6 @@ CREATE TABLE IF NOT EXISTS concursantes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
 
-const createEstadisticasTable = `
-CREATE TABLE IF NOT EXISTS estadisticas (
-    id INT PRIMARY KEY,
-    total_superchats INT DEFAULT 0,
-    total_puntos_reales DECIMAL(10,2) DEFAULT 0,
-    total_puntos_mostrados INT DEFAULT 0,
-    fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
-
 const createApiKeysTable = `
 CREATE TABLE IF NOT EXISTS api_keys (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,10 +43,6 @@ CREATE TABLE IF NOT EXISTS api_keys (
 // Configurar la base de datos para usar UTF-8mb4
 const setDatabaseCharset = `
 ALTER DATABASE ${config.database.database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-`;
-
-const insertEstadisticasIniciales = `
-INSERT IGNORE INTO estadisticas (id, fecha_inicio) VALUES (1, NOW())
 `;
 
 // Pool de conexiones
@@ -84,8 +70,6 @@ async function initializeDatabase() {
         
         // Crear tablas
         await pool.query(createConcursantesTable);
-        await pool.query(createEstadisticasTable);
-        await pool.query(insertEstadisticasIniciales);
         await pool.query(createApiKeysTable);
         
         console.log('✅ Tablas creadas exitosamente');

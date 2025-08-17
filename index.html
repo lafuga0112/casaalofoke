@@ -52,8 +52,20 @@
 
     <!-- Contenedor Principal -->
     <main class="main-container">
-        <!-- Panel de Concursantes -->
-        <section class="contestants-panel">
+        <!-- Switch de Vista -->
+        <section class="view-switch">
+            <div class="switch-container">
+                <span class="switch-label">Puntuaciones</span>
+                <label class="switch">
+                    <input type="checkbox" id="view-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="switch-label">SuperChats En Vivo</span>
+            </div>
+        </section>
+
+        <!-- Vista Solo Puntuaciones -->
+        <section class="contestants-panel" id="puntuaciones-view">
             <div class="contestants-grid">
                 <!-- LA GIGI -->
                 <div class="contestant-card" style="--card-index: 0;">
@@ -168,7 +180,7 @@
                         <span class="legend-label">¿Cómo se reparten los puntos?</span>
                         <span class="legend-value">
                             Cuando un SuperChat menciona a varios concursantes en un mismo mensaje, los puntos se dividen equitativamente entre ellos.
-                            Por ejemplo, si un SuperChat de $10 menciona a GIUSEPPE y VLADY, cada uno recibe 5 puntos.
+                            Por ejemplo, si un SuperChat de $10 menciona a GIGI y VLADY, cada uno recibe 5 puntos.
                         </span>
                     </div>
                 </div>
@@ -181,6 +193,157 @@
                             Fue creado por un fan como herramienta informativa y de entretenimiento. 
                             Los resultados pueden no reflejar la puntuación real del reality show.
                         </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vista Combinada: SuperChats (Izquierda) + Tabla Lista (Derecha) -->
+        <section class="live-view" id="superchats-view" style="display: none;">
+            <!-- Panel de SuperChats (Izquierda) -->
+            <div class="superchats-panel">
+                <div class="superchats-header">
+                    <div class="superchats-title">
+                        <h2>SUPERCHATS EN VIVO</h2>
+                    </div>
+                </div>
+                
+                <div class="superchats-container">
+                    <div class="superchats-list" id="superchats-list">
+                        <!-- Los SuperChats se mostrarán aquí -->
+                        <div class="no-superchats">
+                            <div class="no-superchats-text">Esperando SuperChats...</div>
+                            <div class="no-superchats-subtext">Los SuperChats aparecerán aquí en tiempo real</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Posiciones en Lista (Derecha) -->
+            <div class="positions-list-panel">
+                <div class="positions-header">
+                    <h2>TABLA DE POSICIONES</h2>
+                    <div class="positions-subtitle">Actualizada en tiempo real</div>
+                </div>
+                <div class="positions-list">
+                    <!-- LA GIGI -->
+                    <div class="position-item" data-contestant="gigi">
+                        <div class="position-rank">1</div>
+                        <div class="position-avatar">
+                            <img src="images/gigi.jpg" alt="LA GIGI" class="position-img" onclick="openContestantProfile('gigi')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">LA GIGI</div>
+                            <div class="position-score" id="list-score-gigi">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- GIUSEPPE -->
+                    <div class="position-item" data-contestant="giuseppe">
+                        <div class="position-rank">2</div>
+                        <div class="position-avatar">
+                            <img src="images/GIUSEPPE.jpg" alt="GIUSEPPE" class="position-img" onclick="openContestantProfile('giuseppe')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">GIUSEPPE</div>
+                            <div class="position-score" id="list-score-giuseppe">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- VLADY -->
+                    <div class="position-item" data-contestant="vlady">
+                        <div class="position-rank">3</div>
+                        <div class="position-avatar">
+                            <img src="images/vlady.jpg" alt="VLADY" class="position-img" onclick="openContestantProfile('vlady')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">VLADY</div>
+                            <div class="position-score" id="list-score-vlady">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- CRAZY -->
+                    <div class="position-item" data-contestant="crazy">
+                        <div class="position-rank">4</div>
+                        <div class="position-avatar">
+                            <img src="images/CRAZY.jpg" alt="CRAZY" class="position-img" onclick="openContestantProfile('crazy')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">CRAZY</div>
+                            <div class="position-score" id="list-score-crazy">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- PAMELA -->
+                    <div class="position-item" data-contestant="pamela">
+                        <div class="position-rank">5</div>
+                        <div class="position-avatar">
+                            <img src="images/pamela.jpg" alt="PAMELA" class="position-img" onclick="openContestantProfile('pamela')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">PAMELA</div>
+                            <div class="position-score" id="list-score-pamela">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- KAROLA -->
+                    <div class="position-item" data-contestant="karola">
+                        <div class="position-rank">6</div>
+                        <div class="position-avatar">
+                            <img src="images/karola.jpg" alt="KAROLA" class="position-img" onclick="openContestantProfile('karola')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">KAROLA</div>
+                            <div class="position-score" id="list-score-karola">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- JIMENEZ -->
+                    <div class="position-item" data-contestant="jimenez">
+                        <div class="position-rank">7</div>
+                        <div class="position-avatar">
+                            <img src="images/JIMENEZ.jpg" alt="JIMENEZ" class="position-img" onclick="openContestantProfile('jimenez')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">JIMENEZ</div>
+                            <div class="position-score" id="list-score-jimenez">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- LA PEKI -->
+                    <div class="position-item" data-contestant="peki">
+                        <div class="position-rank">8</div>
+                        <div class="position-avatar">
+                            <img src="images/peki.jpg" alt="LA PEKI" class="position-img" onclick="openContestantProfile('peki')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">LA PEKI</div>
+                            <div class="position-score" id="list-score-peky">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- CRUSITA -->
+                    <div class="position-item" data-contestant="crusita">
+                        <div class="position-rank">9</div>
+                        <div class="position-avatar">
+                            <img src="images/CRUSITA.jpg" alt="CRUSITA" class="position-img" onclick="openContestantProfile('crusita')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">CRUSITA</div>
+                            <div class="position-score" id="list-score-crusita">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- LUISE -->
+                    <div class="position-item" data-contestant="luise">
+                        <div class="position-rank">10</div>
+                        <div class="position-avatar">
+                            <img src="images/luise.jpg" alt="LUISE" class="position-img" onclick="openContestantProfile('luise')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">LUISE</div>
+                            <div class="position-score" id="list-score-luise">0 PTS</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -205,6 +368,190 @@
         
         // Variables globales
         let isConnected = false;
+        let autoScroll = true;
+        let totalSuperChats = 0;
+        let totalAmount = 0;
+        let previousPositions = {}; // Para rastrear posiciones anteriores
+        
+        // Función para manejar el switch de vista
+        function initViewSwitch() {
+            const viewToggle = document.getElementById('view-toggle');
+            const puntuacionesView = document.getElementById('puntuaciones-view');
+            const superchatsView = document.getElementById('superchats-view');
+            const switchLabels = document.querySelectorAll('.switch-label');
+            
+            // Función para detectar si estamos en móvil
+            function isMobile() {
+                return window.innerWidth <= 768;
+            }
+            
+            // Función para mostrar/ocultar vistas correctamente
+            function updateViews(showSuperChats) {
+                if (showSuperChats) {
+                    // Mostrar vista SuperChats
+                    puntuacionesView.style.display = 'none';
+                    
+                    // Usar el display apropiado según el tamaño de pantalla
+                    if (isMobile()) {
+                        superchatsView.style.display = 'flex';
+                    } else {
+                        superchatsView.style.display = 'grid';
+                    }
+                    
+                    // Actualizar labels
+                    switchLabels[0].classList.remove('active');
+                    switchLabels[1].classList.add('active');
+                } else {
+                    // Mostrar vista Puntuaciones SOLAMENTE
+                    puntuacionesView.style.display = 'block';
+                    superchatsView.style.display = 'none';
+                    
+                    // Actualizar labels
+                    switchLabels[0].classList.add('active');
+                    switchLabels[1].classList.remove('active');
+                }
+            }
+            
+            viewToggle.addEventListener('change', () => {
+                updateViews(viewToggle.checked);
+            });
+            
+            // Manejar cambios de tamaño de ventana
+            window.addEventListener('resize', () => {
+                if (viewToggle.checked) {
+                    // Si estamos en vista SuperChats, actualizar el display
+                    if (isMobile()) {
+                        superchatsView.style.display = 'flex';
+                    } else {
+                        superchatsView.style.display = 'grid';
+                    }
+                }
+            });
+            
+            // Inicializar estado - SOLO puntuaciones visible
+            switchLabels[0].classList.add('active');
+            puntuacionesView.style.display = 'block';
+            superchatsView.style.display = 'none';
+        }
+        
+        // Controles de SuperChats (eliminados - solo auto scroll automático)
+        function initSuperChatControls() {
+            // Auto scroll siempre activado automáticamente
+            autoScroll = true;
+        }
+        
+        // Función para limpiar SuperChats
+        function clearSuperChats() {
+            const superChatsList = document.getElementById('superchats-list');
+            superChatsList.innerHTML = `
+                <div class="no-superchats">
+                    <div class="no-superchats-text">Chat Limpiado</div>
+                    <div class="no-superchats-subtext">Los nuevos SuperChats aparecerán aquí</div>
+                </div>
+            `;
+            
+            // Resetear estadísticas
+            totalSuperChats = 0;
+            totalAmount = 0;
+            updateSuperChatStats();
+        }
+        
+        // Función para hacer scroll al final
+        function scrollToBottom() {
+            const superChatsList = document.getElementById('superchats-list');
+            superChatsList.scrollTop = superChatsList.scrollHeight;
+        }
+        
+        // Función para actualizar estadísticas (eliminada)
+        function updateSuperChatStats() {
+            // Estadísticas eliminadas - función vacía
+        }
+        
+        // Función para obtener tier de color según monto USD
+        function getTierClass(montoUSD) {
+            if (montoUSD >= 100) return 'tier-6';      // $100+ - Púrpura
+            if (montoUSD >= 50) return 'tier-5';       // $50-99 - Rojo
+            if (montoUSD >= 20) return 'tier-4';       // $20-49 - Naranja
+            if (montoUSD >= 10) return 'tier-3';       // $10-19 - Verde
+            if (montoUSD >= 5) return 'tier-2';        // $5-9 - Cyan
+            return 'tier-1';                           // $1-4 - Azul
+        }
+
+        // Función para formatear texto de concursantes
+        function formatContestantsText(concursantes, puntosDistribuidos) {
+            if (concursantes.includes("SIN CLASIFICAR")) {
+                return `→ Todos los participantes (${puntosDistribuidos} pts c/u)`;
+            } else {
+                const participantes = concursantes.join(', ');
+                const puntosCadaUno = concursantes.length > 1 ? ` (${puntosDistribuidos} pts c/u)` : ` (${puntosDistribuidos} pts)`;
+                return `→ ${participantes}${puntosCadaUno}`;
+            }
+        }
+
+        // Función para agregar SuperChat
+        function addSuperChat(superChatData) {
+            const superChatsList = document.getElementById('superchats-list');
+            
+            // Remover mensaje de "no superchats" si existe
+            const noSuperChats = superChatsList.querySelector('.no-superchats');
+            if (noSuperChats) {
+                noSuperChats.remove();
+            }
+            
+            // Crear elemento de SuperChat
+            const superChatElement = document.createElement('div');
+            superChatElement.className = 'superchat-item';
+            
+            const timeString = new Date(superChatData.timestamp).toLocaleTimeString('es-DO', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            
+            // Obtener tier de color
+            const tierClass = getTierClass(superChatData.montoUSD);
+            
+            // Formatear texto de concursantes
+            const contestantsText = formatContestantsText(superChatData.concursantes, superChatData.puntosDistribuidos);
+            const contestantsClass = superChatData.concursantes.includes("SIN CLASIFICAR") ? 'sin-clasificar' : '';
+            
+            // Mostrar conversión de moneda si es diferente
+            const conversionText = (superChatData.montoOriginal && superChatData.moneda && superChatData.moneda !== 'USD') ?
+                `<div class="superchat-conversion">${superChatData.montoOriginal} ${superChatData.moneda} → $${superChatData.montoUSD} USD</div>` : '';
+            
+            superChatElement.innerHTML = `
+                <div class="superchat-header">
+                    <div class="superchat-author">${superChatData.autor}</div>
+                    <div class="superchat-amount ${tierClass}">
+                        $${superChatData.montoUSD}
+                        ${conversionText}
+                    </div>
+                </div>
+                <div class="superchat-message">${superChatData.mensaje || 'Sin mensaje'}</div>
+                <div class="superchat-footer">
+                    <div class="superchat-contestants ${contestantsClass}">${contestantsText}</div>
+                    <div class="superchat-time">${timeString}</div>
+                </div>
+            `;
+            
+            // Agregar al inicio de la lista (más recientes arriba)
+            superChatsList.insertBefore(superChatElement, superChatsList.firstChild);
+            
+            // Actualizar estadísticas (aunque no se muestren, mantener la lógica)
+            totalSuperChats++;
+            totalAmount += superChatData.montoUSD;
+            updateSuperChatStats();
+            
+            // Auto scroll si está activado
+            if (autoScroll) {
+                setTimeout(scrollToBottom, 100);
+            }
+            
+            // Animar entrada
+            superChatElement.style.animation = 'slideInRight 0.5s ease-out';
+        }
+        
         // Función para solicitar puntuaciones via WebSocket
         function requestScores() {
             if (isConnected) {
@@ -239,10 +586,83 @@
             }
         }
 
-        // Función para reordenar concursantes según puntuación
+        // Función para detectar cambios de posición y aplicar animaciones
+        function detectPositionChanges(concursantes) {
+            const currentPositions = {};
+            const positionChanges = [];
+            
+            // Crear mapa de posiciones actuales
+            concursantes.forEach((concursante, index) => {
+                currentPositions[concursante.slug] = index + 1;
+            });
+            
+            // Comparar con posiciones anteriores
+            Object.keys(currentPositions).forEach(slug => {
+                const currentPos = currentPositions[slug];
+                const previousPos = previousPositions[slug];
+                
+                if (previousPos && previousPos !== currentPos) {
+                    positionChanges.push({
+                        slug: slug,
+                        from: previousPos,
+                        to: currentPos,
+                        direction: currentPos < previousPos ? 'up' : 'down'
+                    });
+                }
+            });
+            
+            // Actualizar posiciones anteriores
+            previousPositions = { ...currentPositions };
+            
+            return positionChanges;
+        }
+
+        // Función para aplicar animaciones de cambio de posición
+        function applyPositionAnimations(positionChanges) {
+            positionChanges.forEach(change => {
+                // Animar en vista principal (grid)
+                const mainCard = document.querySelector(`#score-${change.slug}`)?.closest('.contestant-card');
+                // Animar en vista de lista
+                const listItem = document.querySelector(`[data-contestant="${change.slug}"]`);
+                
+                const elements = [mainCard, listItem].filter(el => el);
+                
+                elements.forEach(element => {
+                    // Remover animaciones anteriores
+                    element.classList.remove('moving-up', 'moving-down', 'position-changed', 'new-leader');
+                    
+                    // Aplicar nueva animación según el tipo de cambio
+                    if (change.direction === 'up') {
+                        element.classList.add('moving-up');
+                        
+                        // Efecto especial si llega al primer lugar
+                        if (change.to === 1) {
+                            setTimeout(() => {
+                                element.classList.remove('moving-up');
+                                element.classList.add('new-leader');
+                            }, 1500);
+                        }
+                    } else {
+                        element.classList.add('moving-down');
+                    }
+                    
+                    // Remover clase después de la animación
+                    setTimeout(() => {
+                        element.classList.remove('moving-up', 'moving-down', 'position-changed');
+                    }, change.direction === 'up' && change.to === 1 ? 3500 : 1500);
+                });
+                
+                console.log(`🎯 ${change.slug} se movió del puesto ${change.from} al ${change.to} (${change.direction})`);
+            });
+        }
+
+        // Función para reordenar concursantes según puntuación con animaciones
         function reorderContestants(concursantes) {
             const container = document.querySelector('.contestants-grid');
             const cards = Array.from(container.children);
+            
+            // Detectar cambios de posición ANTES del reordenamiento
+            const positionChanges = detectPositionChanges(concursantes);
             
             // Crear un mapa de las cards actuales por slug
             const cardMap = {};
@@ -255,6 +675,9 @@
                 }
             });
             
+            // Aplicar clase de reordenamiento
+            container.classList.add('reordering');
+            
             // Reordenar según la nueva data
             container.innerHTML = '';
             concursantes.forEach(concursante => {
@@ -265,6 +688,67 @@
                     console.warn(`No se encontró card para: ${concursante.slug}`);
                 }
             });
+            
+            // Remover clase de reordenamiento y aplicar animaciones
+            setTimeout(() => {
+                container.classList.remove('reordering');
+                
+                // Aplicar animaciones de cambio de posición
+                if (positionChanges.length > 0) {
+                    applyPositionAnimations(positionChanges);
+                }
+            }, 100);
+        }
+
+        // Función para actualizar tabla de posiciones en lista con animaciones
+        function updatePositionsList(concursantes) {
+            const positionsList = document.querySelector('.positions-list');
+            if (!positionsList) return;
+
+            const positionItems = Array.from(positionsList.children);
+            
+            // Crear un mapa de los items por contestant
+            const itemMap = {};
+            positionItems.forEach(item => {
+                const contestant = item.getAttribute('data-contestant');
+                if (contestant) {
+                    itemMap[contestant] = item;
+                }
+            });
+            
+            // Aplicar clase de reordenamiento
+            positionsList.classList.add('reordering');
+            
+            // Reordenar y actualizar
+            positionsList.innerHTML = '';
+            concursantes.forEach((concursante, index) => {
+                const item = itemMap[concursante.slug];
+                if (item) {
+                    // Actualizar ranking
+                    const rankElement = item.querySelector('.position-rank');
+                    if (rankElement) {
+                        rankElement.textContent = index + 1;
+                    }
+                    
+                    // Actualizar puntos
+                    const scoreElement = item.querySelector('.position-score');
+                    if (scoreElement) {
+                        scoreElement.textContent = `${Math.round(concursante.puntos_reales)} PTS`;
+                    }
+                    
+                    // Agregar índice para animación
+                    item.style.setProperty('--item-index', index);
+                    
+                    positionsList.appendChild(item);
+                } else {
+                    console.warn(`No se encontró position item para: ${concursante.slug}`);
+                }
+            });
+            
+            // Remover clase de reordenamiento
+            setTimeout(() => {
+                positionsList.classList.remove('reordering');
+            }, 100);
         }
 
         // Función para actualizar la hora de última actualización
@@ -305,6 +789,7 @@
         socket.on('puntuaciones-update', (data) => {
             console.log('📊 Puntuaciones actualizadas via WebSocket');
             if (data.success) {
+                // Actualizar tabla principal (vista puntuaciones)
                 reorderContestants(data.data);
                 data.data.forEach((concursante) => {
                     const scoreElement = document.getElementById(`score-${concursante.slug}`);
@@ -312,6 +797,10 @@
                         scoreElement.textContent = `${Math.round(concursante.puntos_reales)}PTS`;
                     }
                 });
+                
+                // Actualizar tabla de posiciones en lista (vista combinada)
+                updatePositionsList(data.data);
+                
                 // Actualizar la hora de última actualización cuando se reciben nuevas puntuaciones
                 updateLastUpdateTime();
             }
@@ -319,18 +808,18 @@
         
         socket.on('estadisticas-update', (stats) => {
             console.log('📈 Estadísticas actualizadas via WebSocket');
-            actualizarEstadisticasPanel(stats);
+            // actualizarEstadisticasPanel(stats); // This function is not defined in the original file
         });
         
         socket.on('dia-actualizado', (info) => {
             console.log('📅 Día del reality actualizado:', info);
-            actualizarDiaEnHeader(info.diaActual, info.titulo);
+            // actualizarDiaEnHeader(info.diaActual, info.titulo); // This function is not defined in the original file
         });
         
         socket.on('monitor-status', (status) => {
-            if (status.diaActual) {
-                actualizarDiaEnHeader(status.diaActual, status.tituloVideo);
-            }
+            // if (status.diaActual) { // This function is not defined in the original file
+            //     actualizarDiaEnHeader(status.diaActual, status.tituloVideo);
+            // }
         });
         
         // Función para actualizar estadísticas del panel
@@ -366,10 +855,10 @@
         // Función para animar concursantes que recibieron puntos
         function animarConcursantesQueRecibieronPuntos(concursantesNombres) {
             concursantesNombres.forEach(nombreConcursante => {
-                // Buscar la card por el nombre del concursante
-                const cards = document.querySelectorAll('.contestant-card');
+                // Buscar la card por el nombre del concursante en ambas vistas
+                const cards = document.querySelectorAll('.contestant-card, .position-item');
                 cards.forEach(card => {
-                    const nombreElement = card.querySelector('.contestant-name');
+                    const nombreElement = card.querySelector('.contestant-name, .position-name');
                     if (nombreElement && nombreElement.textContent.trim() === nombreConcursante) {
                         // Animar la card
                         card.classList.add('points-received');
@@ -391,6 +880,19 @@
             setInterval(() => {
                 updateLastUpdateTime();
             }, 300000);
+
+            // Inicializar controles de switch y SuperChats
+            initViewSwitch();
+            initSuperChatControls();
+
+            // Escuchar mensajes de SuperChats en tiempo real
+            socket.on('nuevo-superchat', (superChatData) => {
+                addSuperChat(superChatData);
+                // Animar concursantes que recibieron puntos si el mensaje incluye a alguien
+                if (superChatData.concursantes && superChatData.concursantes.length > 0) {
+                    animarConcursantesQueRecibieronPuntos(superChatData.concursantes);
+                }
+            });
         });
     </script>
 </body>
