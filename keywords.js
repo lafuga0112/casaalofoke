@@ -62,7 +62,8 @@ const CONCURSANTES = {
       "crusita &",
       "Team Crucita",
       'Cruzita',
-      'CRUCITAAAA'
+      'CRUCITAAAA',
+      'Crucita'
     ]
   },
   LUISE: {
@@ -85,7 +86,8 @@ const CONCURSANTES = {
       'Ñaño',
       "Ñañitoo",
       'Louise',
-      'Luis'
+      'Luis',
+      'LUÍSSE'
     ]
   },
   GIGI: {
