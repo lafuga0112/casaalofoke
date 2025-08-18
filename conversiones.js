@@ -124,7 +124,6 @@ function convertirAUSD(monto, moneda) {
     // Usar las tasas globales cargadas al inicio
     if (TASAS_CONVERSION_GLOBAL[monedaNormalizada]) {
         const montoUSD = monto * TASAS_CONVERSION_GLOBAL[monedaNormalizada];
-        console.log(`💱 Conversión: ${monto} ${monedaNormalizada} = $${montoUSD.toFixed(2)} USD (tasa: ${TASAS_CONVERSION_GLOBAL[monedaNormalizada].toFixed(6)})`);
         return montoUSD;
     } else {
         console.warn(`⚠️ Moneda no soportada: ${monedaNormalizada}. Usando valor original como USD.`);

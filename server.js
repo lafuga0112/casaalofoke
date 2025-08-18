@@ -81,16 +81,14 @@ io.on('connection', (socket) => {
 // Funciones del monitor de Super Chats
 // convertirAUSD ahora se importa desde conversiones.js
 
-// Función para obtener historial de SuperChats con filtros
+// Función para obtener historial de SuperChats (solo filtro por fecha)
 async function obtenerHistorialSuperChats(filtros = {}) {
     try {
         const {
             fechaInicio,
             fechaFin,
             limite = 50,
-            offset = 0,
-            soloParaTodos = false,
-            montoMinimo = 0
+            offset = 0
         } = filtros;
         
         let whereConditions = [];
@@ -105,17 +103,6 @@ async function obtenerHistorialSuperChats(filtros = {}) {
         if (fechaFin) {
             whereConditions.push('timestamp <= ?');
             queryParams.push(fechaFin);
-        }
-        
-        // Filtro para SuperChats "para todos"
-        if (soloParaTodos) {
-            whereConditions.push('es_para_todos = TRUE');
-        }
-        
-        // Filtro por monto mínimo
-        if (montoMinimo > 0) {
-            whereConditions.push('monto_usd >= ?');
-            queryParams.push(montoMinimo);
         }
         
         const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
@@ -142,7 +129,21 @@ async function obtenerHistorialSuperChats(filtros = {}) {
         
         // Procesar los datos para el frontend
         const superchatsProcessed = superchats.map(sc => {
-            const concursantesDetectados = JSON.parse(sc.concursantes_detectados || '[]');
+            let concursantesDetectados = [];
+            try {
+                // Intentar parsear como JSON, si falla asumir que es un array simple
+                if (sc.concursantes_detectados) {
+                    if (sc.concursantes_detectados.startsWith('[') || sc.concursantes_detectados.startsWith('{')) {
+                        concursantesDetectados = JSON.parse(sc.concursantes_detectados);
+                    } else {
+                        // Si no es JSON, asumir que es un string simple y convertirlo a array
+                        concursantesDetectados = [sc.concursantes_detectados];
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error parseando concursantes_detectados:', sc.concursantes_detectados, error.message);
+                concursantesDetectados = [];
+            }
             
             return {
                 id: sc.id,
@@ -193,7 +194,6 @@ function detectarConcursantes(mensaje) {
         }
     }
     
-    console.log(`🎯 [DETECCIÓN] Concursantes detectados: ${concursantesDetectados.length > 0 ? concursantesDetectados.join(', ') : 'NINGUNO'}`);
     
     if (concursantesDetectados.length === 0) {
         return ["SIN CLASIFICAR"];
@@ -207,7 +207,6 @@ async function distribuirPuntos(concursantes, puntosUSD) {
         if (concursantes.includes("SIN CLASIFICAR")) {
             // Si no llega a $10, no se distribuye nada
             if (puntosUSD < 10) {
-                console.log(`⚠️ [PRODUCCIÓN] SuperChat de $${puntosUSD} muy pequeño para distribuir entre 10 participantes. No se asignan puntos.`);
                 return `SuperChat de $${puntosUSD} muy pequeño para distribuir entre todos los participantes (mínimo $10 requerido)`;
             }
             
@@ -224,7 +223,6 @@ async function distribuirPuntos(concursantes, puntosUSD) {
                 );
             }
             
-            console.log(`✅ [PRODUCCIÓN] Distribuidos ${puntosPorConcursante} puntos a cada uno de los 10 concursantes`);
             return `Distribuido entre los 10 concursantes (${puntosPorConcursante} puntos cada uno)`;
             
         } else {
@@ -241,7 +239,6 @@ async function distribuirPuntos(concursantes, puntosUSD) {
                 );
             }
             
-            console.log(`✅ [PRODUCCIÓN] Distribuidos ${puntosPorConcursante} puntos a ${concursantes.join(', ')}`);
             return `Distribuido entre ${concursantes.length} concursante(s) (${puntosPorConcursante} puntos cada uno)`;
         }
     } catch (err) {
@@ -602,9 +599,6 @@ async function iniciarMonitorSuperChats() {
                 // Contar cuántos SuperChats hay en los mensajes recibidos
                 const superChatsCount = data.items?.filter(item => item.snippet?.superChatDetails).length || 0;
                 
-                if (superChatsCount > 0) {
-                    console.log(`💰 SuperChats detectados: ${superChatsCount}`);
-                }
 
                 for (const item of data.items || []) {
                     const author = item.authorDetails?.displayName || "Desconocido";
@@ -619,10 +613,8 @@ async function iniciarMonitorSuperChats() {
                         console.log(`💸 SuperChat de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
                         
                         const concursantes = detectarConcursantes(msg);
-                        console.log(`👥 Concursantes detectados: ${concursantes.join(', ') || 'Ninguno'}`);
                         
                         const montoUSD = Math.round(convertirAUSD(montoOriginal, moneda));
-                        console.log(`💵 Monto en USD: $${montoUSD}`);
                         
                         try {
                             // Calcular puntos por concursante antes de distribuir
@@ -645,7 +637,6 @@ async function iniciarMonitorSuperChats() {
                             
                             // Distribuir puntos
                             const distribucion = await distribuirPuntos(concursantes, montoUSD);
-                            console.log(`📊 Distribución de puntos: ${distribucion}`);
                             
                             // Guardar SuperChat en el historial
                             const esParaTodos = concursantes.includes("SIN CLASIFICAR");
@@ -693,7 +684,6 @@ async function iniciarMonitorSuperChats() {
                             
                             // Enviar puntuaciones actualizadas
                             enviarPuntuacionesActualizadas();
-                            console.log(`✅ [PRODUCCIÓN] Puntuaciones actualizadas y enviadas a todos los clientes`);
                             
                         } catch (err) {
                             console.error('❌ Error procesando SuperChat:', err.message);

@@ -219,16 +219,7 @@
                                 <option value="todo">Todo el historial</option>
                             </select>
                             
-                            <select id="tipo-filter" class="filter-select">
-                                <option value="">Todos los tipos</option>
-                                <option value="especificos">SuperChats específicos</option>
-                                <option value="para-todos">Para todos</option>
-                            </select>
-                            
-                            <input type="number" id="monto-filter" class="filter-input" placeholder="Monto mín. ($)" min="0">
-                            
-                            <button id="aplicar-filtros" class="filter-button">Filtrar</button>
-                            <button id="limpiar-filtros" class="filter-button secondary">Limpiar</button>
+                            <button id="limpiar-filtros" class="filter-button secondary">Limpiar historial</button>
                         </div>
                     </div>
                 </div>
@@ -700,19 +691,18 @@
             }
         }
 
-        // Función para cargar historial de SuperChats
-        function cargarHistorialSuperChats(filtros = {}, limpiarLista = true) {
+        // Función para cargar historial de SuperChats (mantiene tiempo real siempre)
+        function cargarHistorialSuperChats(filtros = {}, esNuevaConsulta = true) {
             if (!isConnected || isLoadingHistory) return;
             
             isLoadingHistory = true;
             
-            if (limpiarLista) {
+            if (esNuevaConsulta) {
                 currentOffset = 0;
+                // Limpiar solo SuperChats del historial, mantener los de tiempo real
                 const superChatsList = document.getElementById('superchats-list');
-                // Mantener solo los SuperChats en tiempo real (sin clase historial)
-                const realTimeChats = Array.from(superChatsList.querySelectorAll('.superchat-item:not(.historial)'));
-                superChatsList.innerHTML = '';
-                realTimeChats.forEach(chat => superChatsList.appendChild(chat));
+                const historialChats = Array.from(superChatsList.querySelectorAll('.superchat-item.historial'));
+                historialChats.forEach(chat => chat.remove());
             }
             
             const filtrosCompletos = {
@@ -725,11 +715,9 @@
             socket.emit('get-superchats-historial', filtrosCompletos);
         }
 
-        // Función para aplicar filtros
+        // Función para aplicar filtros (solo fecha)
         function aplicarFiltros() {
             const fechaFilter = document.getElementById('fecha-filter').value;
-            const tipoFilter = document.getElementById('tipo-filter').value;
-            const montoFilter = document.getElementById('monto-filter').value;
             
             let filtros = {};
             
@@ -738,38 +726,26 @@
                 filtros = { ...filtros, ...getFechaFiltros(fechaFilter) };
             }
             
-            // Aplicar filtro de tipo
-            if (tipoFilter === 'para-todos') {
-                filtros.soloParaTodos = true;
-            }
-            
-            // Aplicar filtro de monto
-            if (montoFilter && parseFloat(montoFilter) > 0) {
-                filtros.montoMinimo = parseFloat(montoFilter);
-            }
-            
             currentFilters = filtros;
-            cargarHistorialSuperChats(filtros, true);
+            cargarHistorialSuperChats(filtros, false); // false = no limpiar tiempo real
         }
 
-        // Función para limpiar filtros
+        // Función para limpiar historial (mantener tiempo real)
         function limpiarFiltros() {
             document.getElementById('fecha-filter').value = '';
-            document.getElementById('tipo-filter').value = '';
-            document.getElementById('monto-filter').value = '';
             
             currentFilters = {};
             
-            // Limpiar lista de historial, mantener solo tiempo real
+            // Limpiar solo SuperChats del historial, mantener tiempo real
             const superChatsList = document.getElementById('superchats-list');
-            const realTimeChats = Array.from(superChatsList.querySelectorAll('.superchat-item:not(.historial)'));
-            superChatsList.innerHTML = '';
-            realTimeChats.forEach(chat => superChatsList.appendChild(chat));
+            const historialChats = Array.from(superChatsList.querySelectorAll('.superchat-item.historial'));
+            historialChats.forEach(chat => chat.remove());
             
             // Ocultar botón "Cargar más"
             document.getElementById('load-more-container').style.display = 'none';
             
             // Si no hay SuperChats en tiempo real, mostrar mensaje
+            const realTimeChats = superChatsList.querySelectorAll('.superchat-item:not(.historial)');
             if (realTimeChats.length === 0) {
                 superChatsList.innerHTML = `
                     <div class="no-superchats">
@@ -785,7 +761,7 @@
             if (!hasMoreHistory || isLoadingHistory) return;
             
             currentOffset += 50;
-            cargarHistorialSuperChats(currentFilters, false);
+            cargarHistorialSuperChats(currentFilters, false); // false = no es nueva consulta
         }
 
         // Links de Instagram de los concursantes
@@ -1177,7 +1153,6 @@
             initSuperChatControls();
 
             // Inicializar controles de filtros
-            document.getElementById('aplicar-filtros').addEventListener('click', aplicarFiltros);
             document.getElementById('limpiar-filtros').addEventListener('click', limpiarFiltros);
             document.getElementById('load-more-btn').addEventListener('click', cargarMasSuperChats);
             
