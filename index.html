@@ -670,24 +670,24 @@
             const images = generateContestantImages(concursantes);
             
             let text = '';
-            // Si son 10 concursantes (todos), es un caso "SIN CLASIFICAR"
-            if (concursantes.length === 10) {
-                // Verificar si no se asignaron puntos por monto muy bajo
-                if (distribucion && distribucion.includes("mínimo $10 requerido")) {
-                    text = `🎯 Todos los participantes<br><span class="points-info">⚠️ Sin puntos (monto insuficiente < $10)</span>`;
+                            // Si son 10 concursantes (todos), es un caso "SIN CLASIFICAR"
+                if (concursantes.length === 10) {
+                    // Verificar si no se asignaron puntos por monto muy bajo
+                    if (distribucion && distribucion.includes("mínimo $10 requerido")) {
+                        text = `Todos los participantes<br><span class="points-info">Sin puntos (monto insuficiente < $10)</span>`;
+                    } else {
+                        text = `Todos los participantes<br><span class="points-info">${puntosDistribuidos} puntos cada uno</span>`;
+                    }
                 } else {
-                    text = `🎯 Todos los participantes<br><span class="points-info">✅ ${puntosDistribuidos} puntos cada uno</span>`;
-                }
-            } else {
                 // Para concursantes específicos, mostrar progresión de puntos
-                if (puntuacionesAnteriores && Object.keys(puntuacionesAnteriores).length > 0) {
-                    const participantesConProgresion = concursantes.map(nombre => {
-                        const puntosAnteriores = puntuacionesAnteriores[nombre] || 0;
-                        const puntosNuevos = puntosAnteriores + puntosDistribuidos;
-                        return `${nombre}: ${puntosAnteriores} + ${puntosDistribuidos} = ${puntosNuevos} pts`;
-                    });
-                    text = participantesConProgresion.join('<br>→ ');
-                    text = '→ ' + text;
+                                    if (puntuacionesAnteriores && Object.keys(puntuacionesAnteriores).length > 0) {
+                        const participantesConProgresion = concursantes.map(nombre => {
+                            const puntosAnteriores = puntuacionesAnteriores[nombre] || 0;
+                            const puntosNuevos = puntosAnteriores + puntosDistribuidos;
+                            return `${nombre}: ${puntosAnteriores} + ${puntosDistribuidos} = ${puntosNuevos} pts`;
+                        });
+                        text = participantesConProgresion.join('<br>');
+                        text = text;
                 } else {
                     // Fallback al formato anterior si no hay puntuaciones anteriores
                     const participantes = concursantes.join(', ');
@@ -744,7 +744,7 @@
                 ? ` (${superChatData.originalAmount} ${superChatData.originalCurrency})` : '';
             
             // Header compacto en una línea: Monto • Autor • Hora
-            const compactHeader = `💸 $${superChatData.amount}${originalCurrencyText} • 👤 ${superChatData.author} • 🕒 ${compactTime}`;
+            const compactHeader = `$${superChatData.amount}${originalCurrencyText} • ${superChatData.author} • ${compactTime}`;
             
             // Mensaje solo si existe, sin caja separada
             const messageText = superChatData.message ? 

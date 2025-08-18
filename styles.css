@@ -2948,6 +2948,15 @@ input:checked + .slider:before {
     color: rgba(255, 255, 255, 0.95);
 }
 
+/* Colores por tier de monto para el header */
+.superchat-header-compact.tier-1 { color: #1e90ff; }
+.superchat-header-compact.tier-2 { color: #00ced1; }
+.superchat-header-compact.tier-3 { color: #00ff7f; }
+.superchat-header-compact.tier-4 { color: #ffff00; }
+.superchat-header-compact.tier-5 { color: #ffa500; }
+.superchat-header-compact.tier-6 { color: #ff6347; }
+.superchat-header-compact.tier-7 { color: #ff1493; }
+
 .superchat-message {
     font-size: 0.9rem;
     line-height: 1.3;
