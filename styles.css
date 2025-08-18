@@ -2801,3 +2801,162 @@ input:checked + .slider:before {
 .footer-content:hover .creator-name::after {
     opacity: 1;
 }
+
+/* Estilos para filtros de SuperChats */
+.superchats-filters {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filters-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-select, .filter-input {
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    font-size: 0.9rem;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.filter-select {
+    min-width: 140px;
+}
+
+.filter-input {
+    min-width: 120px;
+}
+
+.filter-select:focus, .filter-input:focus {
+    outline: none;
+    border-color: #ff4444;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+}
+
+.filter-select option {
+    background: #1a1a1a;
+    color: white;
+}
+
+.filter-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.filter-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+}
+
+.filter-button.secondary {
+    background: linear-gradient(135deg, #666, #444);
+}
+
+.filter-button.secondary:hover {
+    box-shadow: 0 5px 15px rgba(102, 102, 102, 0.4);
+}
+
+/* Botón Cargar Más */
+.load-more-container {
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.load-more-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Rajdhani', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.load-more-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.load-more-button:hover::before {
+    left: 100%;
+}
+
+.load-more-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+}
+
+.load-more-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Indicador de historial vs tiempo real */
+.superchat-item.historial {
+    opacity: 0.85;
+    border-left: 3px solid #ff6b35;
+}
+
+.superchat-item.historial::before {
+    content: 'HISTORIAL';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.7rem;
+    color: #ff6b35;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+.superchat-item {
+    position: relative;
+}
+
+/* Responsive para filtros */
+@media (max-width: 768px) {
+    .filters-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-select, .filter-input {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .filter-button {
+        width: 100%;
+        margin-top: 10px;
+    }
+}

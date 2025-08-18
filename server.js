@@ -54,12 +54,125 @@ io.on('connection', (socket) => {
     socket.on('get-puntuaciones', () => {
         enviarPuntuacionesACliente(socket);
     });
+    
+    // Handler para solicitar historial de SuperChats
+    socket.on('get-superchats-historial', async (filtros = {}) => {
+        try {
+            const historial = await obtenerHistorialSuperChats(filtros);
+            socket.emit('superchats-historial', {
+                success: true,
+                data: historial.superchats,
+                totalCount: historial.totalCount,
+                hasMore: historial.hasMore,
+                filtros: filtros
+            });
+        } catch (error) {
+            console.error('❌ Error obteniendo historial SuperChats:', error.message);
+            socket.emit('superchats-historial', {
+                success: false,
+                error: error.message
+            });
+        }
+    });
 });
 
 // Función eliminada - ya no necesitamos estadísticas
 
 // Funciones del monitor de Super Chats
 // convertirAUSD ahora se importa desde conversiones.js
+
+// Función para obtener historial de SuperChats con filtros
+async function obtenerHistorialSuperChats(filtros = {}) {
+    try {
+        const {
+            fechaInicio,
+            fechaFin,
+            limite = 50,
+            offset = 0,
+            soloParaTodos = false,
+            montoMinimo = 0
+        } = filtros;
+        
+        let whereConditions = [];
+        let queryParams = [];
+        
+        // Filtro por fecha
+        if (fechaInicio) {
+            whereConditions.push('timestamp >= ?');
+            queryParams.push(fechaInicio);
+        }
+        
+        if (fechaFin) {
+            whereConditions.push('timestamp <= ?');
+            queryParams.push(fechaFin);
+        }
+        
+        // Filtro para SuperChats "para todos"
+        if (soloParaTodos) {
+            whereConditions.push('es_para_todos = TRUE');
+        }
+        
+        // Filtro por monto mínimo
+        if (montoMinimo > 0) {
+            whereConditions.push('monto_usd >= ?');
+            queryParams.push(montoMinimo);
+        }
+        
+        const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
+        
+        // Consulta para obtener el total de registros
+        const countQuery = `SELECT COUNT(*) as total FROM superchats_historial ${whereClause}`;
+        const totalResult = await db.query(countQuery, queryParams);
+        const totalCount = totalResult[0].total;
+        
+        // Consulta para obtener los SuperChats con paginación
+        const dataQuery = `
+            SELECT 
+                id, autor_chat, mensaje, monto_usd, monto_original, moneda_original,
+                concursantes_detectados, es_para_todos, puntos_asignados,
+                puntos_por_concursante, distribucion_descripcion, timestamp
+            FROM superchats_historial 
+            ${whereClause}
+            ORDER BY timestamp DESC 
+            LIMIT ? OFFSET ?
+        `;
+        
+        const dataParams = [...queryParams, limite, offset];
+        const superchats = await db.query(dataQuery, dataParams);
+        
+        // Procesar los datos para el frontend
+        const superchatsProcessed = superchats.map(sc => {
+            const concursantesDetectados = JSON.parse(sc.concursantes_detectados || '[]');
+            
+            return {
+                id: sc.id,
+                author: sc.autor_chat,
+                message: sc.mensaje,
+                amount: parseFloat(sc.monto_usd),
+                currency: 'USD',
+                originalAmount: parseFloat(sc.monto_original),
+                originalCurrency: sc.moneda_original,
+                contestants: concursantesDetectados,
+                pointsPerContestant: sc.puntos_por_concursante,
+                distribucion: sc.distribucion_descripcion,
+                timestamp: sc.timestamp,
+                esHistorial: true // Marcar como historial para diferenciarlo en el frontend
+            };
+        });
+        
+        const hasMore = (offset + limite) < totalCount;
+        
+        return {
+            superchats: superchatsProcessed,
+            totalCount,
+            hasMore
+        };
+        
+    } catch (error) {
+        console.error('❌ Error en obtenerHistorialSuperChats:', error.message);
+        throw error;
+    }
+}
 
 function detectarConcursantes(mensaje) {
     const mensajeLower = mensaje.toLowerCase();
@@ -533,6 +646,32 @@ async function iniciarMonitorSuperChats() {
                             // Distribuir puntos
                             const distribucion = await distribuirPuntos(concursantes, montoUSD);
                             console.log(`📊 Distribución de puntos: ${distribucion}`);
+                            
+                            // Guardar SuperChat en el historial
+                            const esParaTodos = concursantes.includes("SIN CLASIFICAR");
+                            const puntosAsignados = esParaTodos ? montoUSD >= 10 : true;
+                            
+                            await db.query(
+                                `INSERT INTO superchats_historial (
+                                    autor_chat, mensaje, monto_usd, monto_original, moneda_original,
+                                    concursantes_detectados, es_para_todos, puntos_asignados,
+                                    puntos_por_concursante, distribucion_descripcion, video_id
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                [
+                                    author,
+                                    msg,
+                                    montoUSD,
+                                    montoOriginal,
+                                    moneda,
+                                    JSON.stringify(concursantes),
+                                    esParaTodos,
+                                    puntosAsignados,
+                                    puntosPorConcursante,
+                                    distribucion,
+                                    config.youtube.videoId
+                                ]
+                            );
+                            console.log(`💾 SuperChat guardado en historial: ${author} - $${montoUSD}`);
                             
                             // Crear objeto para enviar al frontend
                             const superChatParaEnviar = {

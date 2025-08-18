@@ -110,6 +110,40 @@ async function createSugerenciasKeywordsTable() {
     }
 }
 
+async function createSuperchatsHistorialTable() {
+    const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS superchats_historial (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            autor_chat VARCHAR(100) NOT NULL,
+            mensaje TEXT,
+            monto_usd DECIMAL(10,2) NOT NULL,
+            monto_original DECIMAL(10,2) NOT NULL,
+            moneda_original VARCHAR(10) NOT NULL,
+            concursantes_detectados JSON,
+            es_para_todos BOOLEAN DEFAULT FALSE,
+            puntos_asignados BOOLEAN DEFAULT TRUE,
+            puntos_por_concursante INT DEFAULT 0,
+            distribucion_descripcion TEXT,
+            timestamp DATETIME DEFAULT NOW(),
+            video_id VARCHAR(50),
+            
+            INDEX idx_timestamp (timestamp),
+            INDEX idx_autor (autor_chat),
+            INDEX idx_para_todos (es_para_todos),
+            INDEX idx_puntos_asignados (puntos_asignados),
+            INDEX idx_monto (monto_usd)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+    
+    try {
+        await pool.query(createTableSQL);
+        console.log('✅ Tabla superchats_historial creada correctamente');
+    } catch (error) {
+        console.error('❌ Error creando tabla superchats_historial:', error.message);
+        throw error;
+    }
+}
+
 // Inicializar la base de datos
 async function initializeDatabase() {
     try {
@@ -134,6 +168,7 @@ async function initializeDatabase() {
         await pool.query(createApiKeysTable);
         await createChatAprendizajeTable();
         await createSugerenciasKeywordsTable();
+        await createSuperchatsHistorialTable();
         
         console.log('✅ Tablas creadas exitosamente');
         
