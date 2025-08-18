@@ -15,31 +15,7 @@ const { cargarTasasConversionAlInicio, convertirAUSD } = require('./conversiones
 // Importar el módulo de la API de YouTube
 const youtubeApi = require('./youtube-api');
 
-// Importar crypto para generar hashes
-const crypto = require('crypto');
 
-// Función para generar hash único del SuperChat
-function generarHashSuperChat(author, mensaje, montoOriginal, moneda, timestamp) {
-    const dataString = `${author}|${mensaje || ''}|${montoOriginal}|${moneda}|${timestamp}`;
-    return crypto.createHash('md5').update(dataString).digest('hex');
-}
-
-// Función para verificar si el SuperChat ya fue procesado
-function yaFueProcesado(hash) {
-    return superchatsProcessed.has(hash);
-}
-
-// Función para marcar SuperChat como procesado
-function marcarComoProcesado(hash) {
-    // Si el cache está lleno, eliminar el más antiguo
-    if (superchatsProcessed.size >= MAX_CACHE_SIZE) {
-        const firstHash = superchatsProcessed.values().next().value;
-        superchatsProcessed.delete(firstHash);
-    }
-    
-    superchatsProcessed.add(hash);
-    console.log(`💾 SuperChat marcado como procesado. Cache: ${superchatsProcessed.size}/${MAX_CACHE_SIZE}`);
-}
 
 const app = express();
 const server = http.createServer(app);
@@ -56,10 +32,6 @@ let isMonitoringActive = false;
 let clientesConectados = 0;
 let diaActualReality = 1; // Día por defecto
 let tituloVideoActual = "";
-
-// Cache en memoria para evitar duplicados de SuperChats
-const superchatsProcessed = new Set(); // Almacena hashes de SuperChats ya procesados
-const MAX_CACHE_SIZE = 1000; // Máximo 1000 SuperChats en cache
 
 // WebSocket connections
 io.on('connection', (socket) => {
@@ -85,130 +57,13 @@ io.on('connection', (socket) => {
         enviarPuntuacionesACliente(socket);
     });
     
-    // Handler para solicitar historial de SuperChats
-    socket.on('get-superchats-historial', async (filtros = {}) => {
-        try {
-            const historial = await obtenerHistorialSuperChats(filtros);
-            socket.emit('superchats-historial', {
-                success: true,
-                data: historial.superchats,
-                totalCount: historial.totalCount,
-                hasMore: historial.hasMore,
-                filtros: filtros
-            });
-        } catch (error) {
-            console.error('❌ Error obteniendo historial SuperChats:', error.message);
-            socket.emit('superchats-historial', {
-                success: false,
-                error: error.message
-            });
-        }
-    });
+
 });
 
 // Función eliminada - ya no necesitamos estadísticas
 
 // Funciones del monitor de Super Chats
 // convertirAUSD ahora se importa desde conversiones.js
-
-// Función para obtener historial de SuperChats (solo filtro por fecha)
-async function obtenerHistorialSuperChats(filtros = {}) {
-    try {
-        const {
-            fechaInicio,
-            fechaFin,
-            limite = 50,
-            offset = 0
-        } = filtros;
-        
-        let whereConditions = [];
-        let queryParams = [];
-        
-        // Filtro por fecha
-        if (fechaInicio) {
-            whereConditions.push('timestamp >= ?');
-            queryParams.push(fechaInicio);
-        }
-        
-        if (fechaFin) {
-            whereConditions.push('timestamp <= ?');
-            queryParams.push(fechaFin);
-        }
-        
-        const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
-        
-        // Consulta para obtener el total de registros
-        const countQuery = `SELECT COUNT(*) as total FROM superchats_historial ${whereClause}`;
-        const totalResult = await db.query(countQuery, queryParams);
-        const totalCount = totalResult[0].total;
-        
-        // Consulta para obtener los SuperChats con paginación
-        const dataQuery = `
-            SELECT 
-                id, autor_chat, mensaje, monto_usd, monto_original, moneda_original,
-                concursantes_detectados, es_para_todos, puntos_asignados,
-                puntos_por_concursante, distribucion_descripcion, timestamp
-            FROM superchats_historial 
-            ${whereClause}
-            ORDER BY timestamp DESC 
-            LIMIT ? OFFSET ?
-        `;
-        
-        const dataParams = [...queryParams, limite, offset];
-        const superchats = await db.query(dataQuery, dataParams);
-        
-        // Procesar los datos para el frontend
-        const superchatsProcessed = superchats.map(sc => {
-            let concursantesDetectados = [];
-            
-            // MySQL con tipo JSON devuelve directamente arrays de JavaScript
-            if (sc.concursantes_detectados) {
-                if (Array.isArray(sc.concursantes_detectados)) {
-                    // Ya es un array, usar directamente
-                    concursantesDetectados = sc.concursantes_detectados;
-                } else if (typeof sc.concursantes_detectados === 'string') {
-                    // Si por alguna razón es string, intentar parsear
-                    try {
-                        concursantesDetectados = JSON.parse(sc.concursantes_detectados);
-                    } catch (error) {
-                        // Si no es JSON válido, tratarlo como string simple
-                        concursantesDetectados = [sc.concursantes_detectados];
-                    }
-                } else {
-                    console.warn('⚠️ Tipo inesperado para concursantes_detectados:', typeof sc.concursantes_detectados);
-                    concursantesDetectados = [];
-                }
-            }
-            
-            return {
-                id: sc.id,
-                author: sc.autor_chat,
-                message: sc.mensaje,
-                amount: parseFloat(sc.monto_usd),
-                currency: 'USD',
-                originalAmount: parseFloat(sc.monto_original),
-                originalCurrency: sc.moneda_original,
-                contestants: concursantesDetectados,
-                pointsPerContestant: sc.puntos_por_concursante,
-                distribucion: sc.distribucion_descripcion,
-                timestamp: sc.timestamp,
-                esHistorial: true // Marcar como historial para diferenciarlo en el frontend
-            };
-        });
-        
-        const hasMore = (offset + limite) < totalCount;
-        
-        return {
-            superchats: superchatsProcessed,
-            totalCount,
-            hasMore
-        };
-        
-    } catch (error) {
-        console.error('❌ Error en obtenerHistorialSuperChats:', error.message);
-        throw error;
-    }
-}
 
 function detectarConcursantes(mensaje) {
     const mensajeLower = mensaje.toLowerCase();
@@ -645,20 +500,7 @@ async function iniciarMonitorSuperChats() {
                         const moneda = sc.currency || "";
                         const msg = sc.userComment || "";
                         
-                        // Generar hash único para este SuperChat
-                        const timestamp = snippet.publishedAt || new Date().toISOString();
-                        const superChatHash = generarHashSuperChat(author, msg, montoOriginal, moneda, timestamp);
-                        
-                        // Verificar si ya fue procesado
-                        if (yaFueProcesado(superChatHash)) {
-                            console.log(`🔄 SuperChat duplicado ignorado: ${author} - $${montoOriginal} ${moneda}`);
-                            continue; // Saltar este SuperChat
-                        }
-                        
-                        // Marcar como procesado INMEDIATAMENTE para evitar duplicados en el mismo poll
-                        marcarComoProcesado(superChatHash);
-                        
-                        console.log(`💸 SuperChat NUEVO de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
+                        console.log(`💸 SuperChat de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
                         
                         const concursantes = detectarConcursantes(msg);
                         
@@ -685,32 +527,6 @@ async function iniciarMonitorSuperChats() {
                             
                             // Distribuir puntos
                             const distribucion = await distribuirPuntos(concursantes, montoUSD);
-                            
-                            // Guardar SuperChat en el historial
-                            const esParaTodos = concursantes.includes("SIN CLASIFICAR");
-                            const puntosAsignados = esParaTodos ? montoUSD >= 10 : true;
-                            
-                            await db.query(
-                                `INSERT INTO superchats_historial (
-                                    autor_chat, mensaje, monto_usd, monto_original, moneda_original,
-                                    concursantes_detectados, es_para_todos, puntos_asignados,
-                                    puntos_por_concursante, distribucion_descripcion, video_id
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                                [
-                                    author,
-                                    msg,
-                                    montoUSD,
-                                    montoOriginal,
-                                    moneda,
-                                    JSON.stringify(concursantes),
-                                    esParaTodos,
-                                    puntosAsignados,
-                                    puntosPorConcursante,
-                                    distribucion,
-                                    config.youtube.videoId
-                                ]
-                            );
-                            console.log(`💾 SuperChat guardado en historial: ${author} - $${montoUSD}`);
                             
                             // Crear objeto para enviar al frontend
                             const superChatParaEnviar = {

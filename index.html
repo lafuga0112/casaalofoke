@@ -207,21 +207,7 @@
                         <h2>SUPERCHATS EN VIVO</h2>
                     </div>
                     
-                    <!-- Filtros de Historial -->
-                    <div class="superchats-filters">
-                        <div class="filters-row">
-                            <select id="fecha-filter" class="filter-select">
-                                <option value="">Cargar historial...</option>
-                                <option value="hoy">Hoy</option>
-                                <option value="ayer">Ayer</option>
-                                <option value="semana">Última semana</option>
-                                <option value="mes">Último mes</option>
-                                <option value="todo">Todo el historial</option>
-                            </select>
-                            
-                            <button id="limpiar-filtros" class="filter-button secondary">Limpiar historial</button>
-                        </div>
-                    </div>
+
                 </div>
                 
                 <div class="superchats-container">
@@ -231,11 +217,6 @@
                             <div class="no-superchats-text">Esperando SuperChats...</div>
                             <div class="no-superchats-subtext">Los SuperChats aparecerán aquí en tiempo real</div>
                         </div>
-                    </div>
-                    
-                    <!-- Botón Cargar Más -->
-                    <div class="load-more-container" id="load-more-container" style="display: none;">
-                        <button id="load-more-btn" class="load-more-button">Cargar más SuperChats</button>
                     </div>
                 </div>
             </div>
@@ -401,10 +382,6 @@
         let totalSuperChats = 0;
         let totalAmount = 0;
         let previousPositions = {}; // Para rastrear posiciones anteriores
-        let currentFilters = {}; // Filtros actuales
-        let currentOffset = 0; // Para paginación
-        let hasMoreHistory = false; // Si hay más historial disponible
-        let isLoadingHistory = false; // Para evitar múltiples cargas simultáneas
         
         // Función para manejar el switch de vista
         function initViewSwitch() {
@@ -578,7 +555,7 @@
         }
 
         // Función para agregar SuperChat
-        function addSuperChat(superChatData, isHistorial = false) {
+        function addSuperChat(superChatData) {
             const superChatsList = document.getElementById('superchats-list');
             
             // Remover mensaje de "no superchats" si existe
@@ -589,7 +566,7 @@
             
             // Crear elemento de SuperChat
             const superChatElement = document.createElement('div');
-            superChatElement.className = `superchat-item ${isHistorial ? 'historial' : ''}`;
+            superChatElement.className = 'superchat-item';
             
             const timeString = new Date(superChatData.timestamp).toLocaleTimeString('es-DO', {
                 hour: '2-digit',
@@ -617,32 +594,28 @@
                         ${conversionText}
                     </div>
                 </div>
-                <div class="superchat-message">${superChatData.message || 'Sin mensaje'}</div>
+                                    <div class="superchat-message">${superChatData.message || 'Sin mensaje'}</div>
                 <div class="superchat-footer">
                     <div class="superchat-contestants ${contestantsClass}">${contestantsText}</div>
                     <div class="superchat-time">${timeString}</div>
                 </div>
             `;
             
-            // Si es historial, agregar al final; si es tiempo real, al inicio
-            if (isHistorial) {
-                superChatsList.appendChild(superChatElement);
-            } else {
-                superChatsList.insertBefore(superChatElement, superChatsList.firstChild);
-                
-                // Actualizar estadísticas (aunque no se muestren, mantener la lógica)
-                totalSuperChats++;
-                totalAmount += superChatData.amount;
-                updateSuperChatStats();
-                
-                // Auto scroll si está activado
-                if (autoScroll) {
-                    setTimeout(scrollToBottom, 100);
-                }
-                
-                // Animar entrada
-                superChatElement.style.animation = 'slideInRight 0.5s ease-out';
+            // Agregar al inicio de la lista (más recientes arriba)
+            superChatsList.insertBefore(superChatElement, superChatsList.firstChild);
+            
+            // Actualizar estadísticas (aunque no se muestren, mantener la lógica)
+            totalSuperChats++;
+            totalAmount += superChatData.amount;
+            updateSuperChatStats();
+            
+            // Auto scroll si está activado
+            if (autoScroll) {
+                setTimeout(scrollToBottom, 100);
             }
+            
+            // Animar entrada
+            superChatElement.style.animation = 'slideInRight 0.5s ease-out';
         }
         
         // Función para solicitar puntuaciones via WebSocket
@@ -655,114 +628,7 @@
             }
         }
 
-        // Función para obtener filtros de fecha
-        function getFechaFiltros(tipoFecha) {
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            
-            switch(tipoFecha) {
-                case 'hoy':
-                    return {
-                        fechaInicio: today.toISOString(),
-                        fechaFin: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString()
-                    };
-                case 'ayer':
-                    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-                    return {
-                        fechaInicio: yesterday.toISOString(),
-                        fechaFin: new Date(yesterday.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString()
-                    };
-                case 'semana':
-                    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                    return {
-                        fechaInicio: weekAgo.toISOString(),
-                        fechaFin: now.toISOString()
-                    };
-                case 'mes':
-                    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-                    return {
-                        fechaInicio: monthAgo.toISOString(),
-                        fechaFin: now.toISOString()
-                    };
-                case 'todo':
-                    return {};
-                default:
-                    return {};
-            }
-        }
 
-        // Función para cargar historial de SuperChats (mantiene tiempo real siempre)
-        function cargarHistorialSuperChats(filtros = {}, esNuevaConsulta = true) {
-            if (!isConnected || isLoadingHistory) return;
-            
-            isLoadingHistory = true;
-            
-            if (esNuevaConsulta) {
-                currentOffset = 0;
-                // Limpiar solo SuperChats del historial, mantener los de tiempo real
-                const superChatsList = document.getElementById('superchats-list');
-                const historialChats = Array.from(superChatsList.querySelectorAll('.superchat-item.historial'));
-                historialChats.forEach(chat => chat.remove());
-            }
-            
-            const filtrosCompletos = {
-                ...filtros,
-                offset: currentOffset,
-                limite: 50
-            };
-            
-            console.log('📡 Solicitando historial SuperChats:', filtrosCompletos);
-            socket.emit('get-superchats-historial', filtrosCompletos);
-        }
-
-        // Función para aplicar filtros (solo fecha)
-        function aplicarFiltros() {
-            const fechaFilter = document.getElementById('fecha-filter').value;
-            
-            let filtros = {};
-            
-            // Aplicar filtro de fecha
-            if (fechaFilter) {
-                filtros = { ...filtros, ...getFechaFiltros(fechaFilter) };
-            }
-            
-            currentFilters = filtros;
-            cargarHistorialSuperChats(filtros, false); // false = no limpiar tiempo real
-        }
-
-        // Función para limpiar historial (mantener tiempo real)
-        function limpiarFiltros() {
-            document.getElementById('fecha-filter').value = '';
-            
-            currentFilters = {};
-            
-            // Limpiar solo SuperChats del historial, mantener tiempo real
-            const superChatsList = document.getElementById('superchats-list');
-            const historialChats = Array.from(superChatsList.querySelectorAll('.superchat-item.historial'));
-            historialChats.forEach(chat => chat.remove());
-            
-            // Ocultar botón "Cargar más"
-            document.getElementById('load-more-container').style.display = 'none';
-            
-            // Si no hay SuperChats en tiempo real, mostrar mensaje
-            const realTimeChats = superChatsList.querySelectorAll('.superchat-item:not(.historial)');
-            if (realTimeChats.length === 0) {
-                superChatsList.innerHTML = `
-                    <div class="no-superchats">
-                        <div class="no-superchats-text">Esperando SuperChats...</div>
-                        <div class="no-superchats-subtext">Los SuperChats aparecerán aquí en tiempo real</div>
-                    </div>
-                `;
-            }
-        }
-
-        // Función para cargar más SuperChats
-        function cargarMasSuperChats() {
-            if (!hasMoreHistory || isLoadingHistory) return;
-            
-            currentOffset += 50;
-            cargarHistorialSuperChats(currentFilters, false); // false = no es nueva consulta
-        }
 
         // Links de Instagram de los concursantes
         const instagramLinks = {
@@ -1013,70 +879,7 @@
             // actualizarEstadisticasPanel(stats); // This function is not defined in the original file
         });
 
-        // Listener para historial de SuperChats
-        socket.on('superchats-historial', (response) => {
-            isLoadingHistory = false;
-            
-            if (response.success) {
-                console.log('📊 Historial SuperChats recibido:', response.data.length);
-                
-                // Agregar SuperChats del historial
-                response.data.forEach(superChat => {
-                    addSuperChat(superChat, true);
-                });
-                
-                // Actualizar estado de paginación
-                hasMoreHistory = response.hasMore;
-                
-                // Mostrar/ocultar botón "Cargar más"
-                const loadMoreContainer = document.getElementById('load-more-container');
-                const loadMoreBtn = document.getElementById('load-more-btn');
-                
-                if (hasMoreHistory) {
-                    loadMoreContainer.style.display = 'block';
-                    loadMoreBtn.disabled = false;
-                    loadMoreBtn.textContent = 'Cargar más SuperChats';
-                } else {
-                    if (response.data.length > 0) {
-                        loadMoreContainer.style.display = 'block';
-                        loadMoreBtn.disabled = true;
-                        loadMoreBtn.textContent = 'No hay más SuperChats';
-                    } else {
-                        loadMoreContainer.style.display = 'none';
-                    }
-                }
-                
-                // Si es la primera carga y no hay datos, mostrar mensaje
-                if (currentOffset === 0 && response.data.length === 0) {
-                    const superChatsList = document.getElementById('superchats-list');
-                    const realTimeChats = superChatsList.querySelectorAll('.superchat-item:not(.historial)');
-                    
-                    if (realTimeChats.length === 0) {
-                        superChatsList.innerHTML = `
-                            <div class="no-superchats">
-                                <div class="no-superchats-text">No se encontraron SuperChats</div>
-                                <div class="no-superchats-subtext">Intenta con otros filtros</div>
-                            </div>
-                        `;
-                    }
-                }
-                
-            } else {
-                console.error('❌ Error obteniendo historial:', response.error);
-                // Mostrar mensaje de error
-                const superChatsList = document.getElementById('superchats-list');
-                const realTimeChats = superChatsList.querySelectorAll('.superchat-item:not(.historial)');
-                
-                if (realTimeChats.length === 0) {
-                    superChatsList.innerHTML = `
-                        <div class="no-superchats">
-                            <div class="no-superchats-text">Error cargando historial</div>
-                            <div class="no-superchats-subtext">Intenta nuevamente</div>
-                        </div>
-                    `;
-                }
-            }
-        });
+
         
         socket.on('dia-actualizado', (info) => {
             console.log('📅 Día del reality actualizado:', info);
@@ -1152,16 +955,7 @@
             initViewSwitch();
             initSuperChatControls();
 
-            // Inicializar controles de filtros
-            document.getElementById('limpiar-filtros').addEventListener('click', limpiarFiltros);
-            document.getElementById('load-more-btn').addEventListener('click', cargarMasSuperChats);
-            
-            // Event listener para el dropdown de fecha (carga automática)
-            document.getElementById('fecha-filter').addEventListener('change', function() {
-                if (this.value) {
-                    aplicarFiltros();
-                }
-            });
+
 
             // Escuchar mensajes de SuperChats en tiempo real
             socket.on('nuevo-superchat', (superChatData) => {
