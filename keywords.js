@@ -161,7 +161,8 @@ const CONCURSANTES = {
       "vlady &",
       'bladdy',
       'Blady',
-      'bladi',      
+      'bladi',
+      'Vladi'
     ]
   },
   KAROLA: {
@@ -180,6 +181,7 @@ const CONCURSANTES = {
       "karola &",
       'Karo',
       'Karina',
+      'kaola'
     ]
   },
   PEKY: {
