@@ -516,6 +516,20 @@ async function iniciarMonitorSuperChats() {
                                 contestantsParaEnviar = concursantes;
                             }
                             
+                            // Obtener puntuaciones actuales ANTES de distribuir (para mostrar progresión)
+                            let puntuacionesAnteriores = {};
+                            if (!concursantes.includes("SIN CLASIFICAR")) {
+                                for (const nombreConcursante of concursantes) {
+                                    const resultado = await db.query(
+                                        'SELECT puntos_reales FROM concursantes WHERE nombre = ?',
+                                        [nombreConcursante]
+                                    );
+                                    if (resultado.length > 0) {
+                                        puntuacionesAnteriores[nombreConcursante] = Math.round(resultado[0].puntos_reales);
+                                    }
+                                }
+                            }
+                            
                             // Distribuir puntos
                             const distribucion = await distribuirPuntos(concursantes, montoUSD);
                             
@@ -531,7 +545,8 @@ async function iniciarMonitorSuperChats() {
                                 contestants: contestantsParaEnviar,
                                 pointsPerContestant: puntosPorConcursante,
                                 distribucion: distribucion,
-                                timestamp: new Date().toISOString()
+                                timestamp: new Date().toISOString(),
+                                puntuacionesAnteriores: puntuacionesAnteriores // Para mostrar progresión
                             };
                             
                             // Enviar a todos los clientes conectados

@@ -2802,3 +2802,76 @@ input:checked + .slider:before {
     opacity: 1;
 }
 
+/* Estilos para progresión de puntos */
+.contestants-text {
+    line-height: 1.4;
+}
+
+.contestants-text br {
+    margin-bottom: 2px;
+}
+
+/* Resaltar los números en la progresión */
+.contestants-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 500;
+}
+
+/* Notificación de nuevos SuperChats */
+.new-chats-notification {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+    z-index: 100;
+    animation: slideInDown 0.3s ease-out;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+}
+
+.new-chats-text {
+    font-size: 0.9rem;
+}
+
+.new-chats-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.new-chats-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Asegurar que el contenedor tenga posición relativa */
+.superchats-container {
+    position: relative;
+}
+
