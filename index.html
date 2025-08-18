@@ -505,9 +505,9 @@
                 return '<div class="contestants-images"></div>';
             }
             
-            if (concursantes.includes("SIN CLASIFICAR")) {
-                // Para "SIN CLASIFICAR", mostrar todas las imágenes en miniatura
-                const allImages = Object.keys(contestantImages).map(name => {
+            // Si son 10 concursantes (todos), mostrar todas las imágenes
+            if (concursantes.length === 10) {
+                const allImages = concursantes.map(name => {
                     return `<img src="${contestantImages[name]}" alt="${name}" class="contestant-mini-img" title="${name}">`;
                 }).join('');
                 return `<div class="contestants-images multiple">${allImages}</div>`;
@@ -535,7 +535,8 @@
             const images = generateContestantImages(concursantes);
             
             let text = '';
-            if (concursantes.includes("SIN CLASIFICAR")) {
+            // Si son 10 concursantes (todos), es un caso "SIN CLASIFICAR"
+            if (concursantes.length === 10) {
                 // Verificar si no se asignaron puntos por monto muy bajo
                 if (distribucion && distribucion.includes("mínimo $10 requerido")) {
                     text = `Todos los participantes (0 pts - monto insuficiente)`;
@@ -576,8 +577,8 @@
             const tierClass = getTierClass(superChatData.amount);
             
             // Formatear texto de concursantes
-            const contestantsText = formatContestantsText(superChatData.contestants, superChatData.puntosDistribuidos, superChatData.distribucion);
-            const contestantsClass = superChatData.contestants && superChatData.contestants.includes("SIN CLASIFICAR") ? 'sin-clasificar' : '';
+            const contestantsText = formatContestantsText(superChatData.contestants, superChatData.pointsPerContestant, superChatData.distribucion);
+            const contestantsClass = superChatData.contestants && superChatData.contestants.length === 10 ? 'sin-clasificar' : '';
             
             // Mostrar conversión de moneda si es diferente
             const conversionText = (superChatData.originalAmount && superChatData.originalCurrency && superChatData.originalCurrency !== 'USD') ?

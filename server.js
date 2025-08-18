@@ -512,6 +512,24 @@ async function iniciarMonitorSuperChats() {
                         console.log(`💵 Monto en USD: $${montoUSD}`);
                         
                         try {
+                            // Calcular puntos por concursante antes de distribuir
+                            let puntosPorConcursante = 0;
+                            let contestantsParaEnviar = [];
+                            
+                            if (concursantes.includes("SIN CLASIFICAR")) {
+                                if (montoUSD >= 10) {
+                                    puntosPorConcursante = Math.floor(montoUSD / 10);
+                                    // Para SIN CLASIFICAR, enviar todos los concursantes
+                                    contestantsParaEnviar = Object.values(CONCURSANTES).map(c => c.nombre);
+                                } else {
+                                    puntosPorConcursante = 0;
+                                    contestantsParaEnviar = Object.values(CONCURSANTES).map(c => c.nombre);
+                                }
+                            } else {
+                                puntosPorConcursante = Math.round(montoUSD / concursantes.length);
+                                contestantsParaEnviar = concursantes;
+                            }
+                            
                             // Distribuir puntos
                             const distribucion = await distribuirPuntos(concursantes, montoUSD);
                             console.log(`📊 Distribución de puntos: ${distribucion}`);
@@ -525,7 +543,8 @@ async function iniciarMonitorSuperChats() {
                                 currency: 'USD',
                                 originalAmount: montoOriginal,
                                 originalCurrency: moneda,
-                                contestants: concursantes.includes("SIN CLASIFICAR") ? [] : concursantes,
+                                contestants: contestantsParaEnviar,
+                                pointsPerContestant: puntosPorConcursante,
                                 distribucion: distribucion,
                                 timestamp: new Date().toISOString()
                             };
