@@ -713,7 +713,7 @@
             const superChatElement = document.createElement('div');
             superChatElement.className = 'superchat-item';
             
-            // Formatear tiempo más informativo
+            // Formatear tiempo compacto
             const timestamp = new Date(superChatData.timestamp);
             const now = new Date();
             const isToday = timestamp.toDateString() === now.toDateString();
@@ -721,17 +721,11 @@
             const timeString = timestamp.toLocaleTimeString('es-DO', {
                 hour: '2-digit',
                 minute: '2-digit',
-                second: '2-digit',
-                hour12: false // 24 horas para más claridad
+                hour12: false // Sin segundos para más compacto
             });
             
-            const dateString = isToday ? '' : timestamp.toLocaleDateString('es-DO', {
-                day: '2-digit',
-                month: '2-digit'
-            });
-            
-            const timeAgo = formatTimeAgo(superChatData.timestamp);
-            const fullTimeString = dateString ? `${dateString} ${timeString}` : timeString;
+            const compactTime = isToday ? timeString : 
+                `${timestamp.getDate().toString().padStart(2, '0')}/${(timestamp.getMonth() + 1).toString().padStart(2, '0')} ${timeString}`;
             
             // Obtener tier de color
             const tierClass = getTierClass(superChatData.amount);
@@ -745,38 +739,24 @@
             );
             const contestantsClass = superChatData.contestants && superChatData.contestants.length === 10 ? 'sin-clasificar' : '';
             
-            // Formatear monto con conversión más elegante
+            // Formatear monto compacto
             const originalCurrencyText = (superChatData.originalAmount && superChatData.originalCurrency && superChatData.originalCurrency !== 'USD') 
                 ? ` (${superChatData.originalAmount} ${superChatData.originalCurrency})` : '';
             
-            const amountText = `💸 $${superChatData.amount} USD${originalCurrencyText}`;
+            // Header compacto en una línea: Monto • Autor • Hora
+            const compactHeader = `💸 $${superChatData.amount}${originalCurrencyText} • 👤 ${superChatData.author} • 🕒 ${compactTime}`;
             
-            // Mensaje con mejor formato
+            // Mensaje solo si existe, sin caja separada
             const messageText = superChatData.message ? 
-                `<div class="superchat-message">"${superChatData.message}"</div>` : 
-                '<div class="superchat-message no-message">💬 Sin mensaje</div>';
+                `<div class="superchat-message">"${superChatData.message}"</div>` : '';
             
             superChatElement.innerHTML = `
-                <div class="superchat-header">
-                    <div class="superchat-amount-info">
-                        <span class="superchat-amount ${tierClass}">${amountText}</span>
-                    </div>
-                    <div class="superchat-author-info">
-                        <span class="superchat-author">👤 ${superChatData.author}</span>
-                    </div>
+                <div class="superchat-header-compact ${tierClass}">
+                    ${compactHeader}
                 </div>
-                
                 ${messageText}
-                
-                <div class="superchat-points ${contestantsClass}">
+                <div class="superchat-points-compact ${contestantsClass}">
                     ${contestantsText}
-                </div>
-                
-                <div class="superchat-footer">
-                    <div class="superchat-time">
-                        <span class="time-exact">🕒 ${fullTimeString}</span>
-                        <span class="time-ago">${timeAgo}</span>
-                    </div>
                 </div>
             `;
             
