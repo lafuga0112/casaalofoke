@@ -207,7 +207,20 @@
                         <h2>SUPERCHATS EN VIVO</h2>
                     </div>
                     
-
+                    <!-- Indicador de estado del monitor -->
+                    <div class="monitor-status" id="monitor-status">
+                        <div class="status-indicator">
+                            <span class="status-dot" id="status-dot">🔴</span>
+                            <span class="status-text" id="status-text">INICIANDO...</span>
+                        </div>
+                        <div class="status-details">
+                            <span class="status-detail" id="last-superchat">Último: --</span>
+                            <span class="status-separator">|</span>
+                            <span class="status-detail" id="total-superchats">Total: 0</span>
+                            <span class="status-separator">|</span>
+                            <span class="status-detail" id="connection-status">Desconectado</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="superchats-container">
@@ -393,6 +406,11 @@
         let userIsReading = false; // Si el usuario está leyendo SuperChats antiguos
         let pendingNewChats = 0; // Cantidad de SuperChats nuevos pendientes
         
+        // Variables para indicador de estado
+        let lastSuperChatTime = null; // Timestamp del último SuperChat
+        let monitorActive = false; // Si el monitor está activo
+        let sessionSuperChats = 0; // SuperChats de esta sesión
+        
         // Función para manejar el switch de vista
         function initViewSwitch() {
             const viewToggle = document.getElementById('view-toggle');
@@ -528,6 +546,63 @@
             scrollToBottom();
             pendingNewChats = 0;
             updateNewChatsNotification();
+        }
+
+        // Función para formatear tiempo transcurrido
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '--';
+            
+            const now = new Date();
+            const then = new Date(timestamp);
+            const diffMs = now - then;
+            const diffSeconds = Math.floor(diffMs / 1000);
+            const diffMinutes = Math.floor(diffSeconds / 60);
+            const diffHours = Math.floor(diffMinutes / 60);
+            
+            if (diffSeconds < 60) {
+                return `hace ${diffSeconds}s`;
+            } else if (diffMinutes < 60) {
+                return `hace ${diffMinutes}m`;
+            } else if (diffHours < 24) {
+                return `hace ${diffHours}h`;
+            } else {
+                return `hace ${Math.floor(diffHours / 24)}d`;
+            }
+        }
+
+        // Función para actualizar el indicador de estado
+        function updateMonitorStatus() {
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            const lastSuperChatEl = document.getElementById('last-superchat');
+            const totalSuperChatsEl = document.getElementById('total-superchats');
+            const connectionStatusEl = document.getElementById('connection-status');
+            
+            // Estado del monitor
+            if (monitorActive && isConnected) {
+                statusDot.textContent = '🟢';
+                statusText.textContent = 'MONITOR ACTIVO';
+            } else if (isConnected) {
+                statusDot.textContent = '🟡';
+                statusText.textContent = 'CONECTADO';
+            } else {
+                statusDot.textContent = '🔴';
+                statusText.textContent = 'DESCONECTADO';
+            }
+            
+            // Último SuperChat
+            lastSuperChatEl.textContent = `Último: ${formatTimeAgo(lastSuperChatTime)}`;
+            
+            // Total de SuperChats
+            totalSuperChatsEl.textContent = `Total: ${sessionSuperChats}`;
+            
+            // Estado de conexión
+            connectionStatusEl.textContent = isConnected ? '🔗 Conectado' : '🔗 Desconectado';
+        }
+
+        // Función para actualizar el estado cada segundo
+        function startStatusUpdater() {
+            setInterval(updateMonitorStatus, 1000); // Actualizar cada segundo
         }
         
         // Función para actualizar estadísticas (eliminada)
@@ -686,6 +761,11 @@
             totalSuperChats++;
             totalAmount += superChatData.amount;
             updateSuperChatStats();
+            
+            // Actualizar indicador de estado
+            lastSuperChatTime = superChatData.timestamp;
+            sessionSuperChats++;
+            monitorActive = true; // Si llegan SuperChats, el monitor está activo
             
             // SCROLL INTELIGENTE
             if (wasAtBottom && autoScroll) {
@@ -929,10 +1009,14 @@
             isConnected = true;
             // Solicitar puntuaciones iniciales al conectar
             requestScores();
+            // Actualizar estado inmediatamente
+            updateMonitorStatus();
         });
         
         socket.on('disconnect', () => {
             isConnected = false;
+            monitorActive = false; // Si se desconecta, el monitor no está activo
+            updateMonitorStatus();
         });
         
         socket.on('puntuaciones-update', (data) => {
@@ -966,9 +1050,9 @@
         });
         
         socket.on('monitor-status', (status) => {
-            // if (status.diaActual) { // This function is not defined in the original file
-            //     actualizarDiaEnHeader(status.diaActual, status.tituloVideo);
-            // }
+            // Actualizar estado del monitor basado en la información del servidor
+            monitorActive = status.isActive || false;
+            updateMonitorStatus();
         });
         
         // Función para actualizar estadísticas del panel
@@ -1036,6 +1120,10 @@
 
             // Event listener para el botón "Ver nuevos SuperChats"
             document.getElementById('new-chats-button').addEventListener('click', goToNewChats);
+
+            // Inicializar indicador de estado
+            startStatusUpdater();
+            updateMonitorStatus(); // Actualizar estado inicial
 
 
 

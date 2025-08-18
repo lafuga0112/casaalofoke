@@ -2875,3 +2875,67 @@ input:checked + .slider:before {
     position: relative;
 }
 
+/* Indicador de estado del monitor */
+.monitor-status {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 15px;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.status-dot {
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.status-text {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: white;
+    letter-spacing: 0.5px;
+}
+
+.status-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.status-detail {
+    font-weight: 500;
+}
+
+.status-separator {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 300;
+}
+
+/* Responsive para indicador de estado */
+@media (max-width: 768px) {
+    .status-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .status-separator {
+        display: none;
+    }
+    
+    .monitor-status {
+        padding: 10px 12px;
+    }
+}
+

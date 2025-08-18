@@ -106,7 +106,9 @@ const CONCURSANTES = {
       "gigi y",
       "gigi,",
       "gigi &",
-      'GIIIIIIIGIIIIIIIIII'
+      'GIIIIIIIGIIIIIIIIII',
+      'teamgg',
+      'gg',
     ]
   },
   PAMELA: {
