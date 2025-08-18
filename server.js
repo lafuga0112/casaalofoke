@@ -69,13 +69,11 @@ function detectarConcursantes(mensaje) {
     const mensajeLower = mensaje.toLowerCase();
     const concursantesDetectados = [];
     
-    console.log(`🔍 [DETECCIÓN] Mensaje: "${mensaje}"`);
     
     for (const [key, concursante] of Object.entries(CONCURSANTES)) {
         for (const keyword of concursante.keywords) {
             const keywordLower = keyword.toLowerCase();
             if (mensajeLower.includes(keywordLower)) {
-                console.log(`✅ [DETECCIÓN] ENCONTRADO: "${keywordLower}" → ${concursante.nombre}`);
                 if (!concursantesDetectados.includes(concursante.nombre)) {
                     concursantesDetectados.push(concursante.nombre);
                 }
@@ -436,12 +434,10 @@ function actualizarDiaReality(nuevoTitulo) {
 // Monitor de Super Chats integrado
 async function iniciarMonitorSuperChats() {
     if (isMonitoringActive) {
-        console.log('⚠️ Monitor de Super Chats ya está activo');
         return;
     }
     
     try {
-        console.log('🔄 Iniciando monitor de Super Chats...');
         
         // Obtener información del video
         const videoInfo = await youtubeApi.getVideoInfo(config.youtube.videoId);
@@ -449,12 +445,10 @@ async function iniciarMonitorSuperChats() {
         // Detectar y actualizar el día del reality
         actualizarDiaReality(videoInfo.titulo);
         
-        console.log('🎯 Monitor de Super Chats integrado al servidor web');
         
         isMonitoringActive = true;
 
         // Base de datos lista
-        console.log('✅ Base de datos sincronizada');
 
         // Función para verificar el título del video
         const verificarTitulo = async () => {
@@ -462,9 +456,7 @@ async function iniciarMonitorSuperChats() {
                 const videoInfoActualizada = await youtubeApi.getVideoInfo(config.youtube.videoId);
                 const diaActualizado = actualizarDiaReality(videoInfoActualizada.titulo);
                 
-                if (diaActualizado) {
-                    console.log('🔄 Día del reality actualizado automáticamente');
-                }
+
             } catch (err) {
                 console.error('⚠️ Error verificando título del video:', err.message);
             }
@@ -500,7 +492,6 @@ async function iniciarMonitorSuperChats() {
                         const moneda = sc.currency || "";
                         const msg = sc.userComment || "";
                         
-                        console.log(`💸 SuperChat de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
                         
                         const concursantes = detectarConcursantes(msg);
                         
@@ -581,7 +572,6 @@ async function startServer() {
         await db.initializeDatabase();
         
         // Cargar las tasas de conversión de moneda online
-        console.log('💱 Cargando tasas de conversión de moneda...');
         await cargarTasasConversionAlInicio();
         
         // Cargar las claves API desde la base de datos
@@ -608,8 +598,6 @@ async function startServer() {
                 }, 2000); // Esperar 2 segundos para que el servidor esté completamente listo
             } else {
                 console.error('❌ No hay claves API válidas disponibles. Por favor, agrega claves API válidas en la página de administración.');
-                console.log('⚠️ El servidor está funcionando pero sin monitoreo de SuperChats.');
-                console.log('💡 El sistema de reintento automático intentará reactivar API keys cada 30 minutos.');
             }
         });
     } catch (err) {

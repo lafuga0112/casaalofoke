@@ -75,7 +75,6 @@ async function createChatAprendizajeTable() {
     
     try {
         await pool.query(createTableSQL);
-        console.log('✅ Tabla chat_completo_aprendizaje creada correctamente');
     } catch (error) {
         console.error('❌ Error creando tabla chat_completo_aprendizaje:', error.message);
         throw error;

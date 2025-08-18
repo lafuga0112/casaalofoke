@@ -622,7 +622,6 @@
         function requestScores() {
             if (isConnected) {
                 socket.emit('get-puntuaciones');
-                console.log('📡 Solicitando puntuaciones via WebSocket');
             } else {
                 console.log('❌ WebSocket no conectado, no se pueden obtener puntuaciones');
             }
@@ -720,7 +719,6 @@
                     }, change.direction === 'up' && change.to === 1 ? 3500 : 1500);
                 });
                 
-                console.log(`🎯 ${change.slug} se movió del puesto ${change.from} al ${change.to} (${change.direction})`);
             });
         }
 
@@ -844,18 +842,15 @@
         // WebSocket Event Listeners
         socket.on('connect', () => {
             isConnected = true;
-            console.log('🔌 Conectado al servidor WebSocket');
             // Solicitar puntuaciones iniciales al conectar
             requestScores();
         });
         
         socket.on('disconnect', () => {
             isConnected = false;
-            console.log('🔌 Desconectado del servidor WebSocket');
         });
         
         socket.on('puntuaciones-update', (data) => {
-            console.log('📊 Puntuaciones actualizadas via WebSocket');
             if (data.success) {
                 // Actualizar tabla principal (vista puntuaciones)
                 reorderContestants(data.data);
@@ -875,7 +870,6 @@
         });
         
         socket.on('estadisticas-update', (stats) => {
-            console.log('📈 Estadísticas actualizadas via WebSocket');
             // actualizarEstadisticasPanel(stats); // This function is not defined in the original file
         });
 

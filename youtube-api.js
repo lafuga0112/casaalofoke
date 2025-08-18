@@ -79,7 +79,6 @@ async function marcarApiKeyInactiva(apiKey, reason) {
             WHERE api_key = ?`,
             [apiKey]
         );
-        console.log(`⚠️ API key desactivada: ${reason}`);
         
         // Recargar las claves API activas
         await cargarApiKeys();
@@ -106,7 +105,6 @@ async function cargarApiKeys() {
             apiKeys = rows.map(row => row.api_key);
             lastKeyIndex = -1; // Reiniciar el índice
             
-            console.log(`✅ Cargadas ${apiKeys.length} claves API desde la base de datos`);
         } else {
             console.warn('⚠️ No hay claves API disponibles en la base de datos');
             apiKeys = [];
@@ -125,7 +123,6 @@ async function reactivarApiKeysDeshabilitadas() {
             return;
         }
         
-        console.log('🔄 Iniciando reactivación automática de API keys...');
         
         // Obtener todas las API keys inactivas
         const apiKeysInactivas = await db.query(
@@ -133,18 +130,15 @@ async function reactivarApiKeysDeshabilitadas() {
         );
         
         if (!apiKeysInactivas || apiKeysInactivas.length === 0) {
-            console.log('✅ No hay API keys inactivas para reactivar');
             return;
         }
         
-        console.log(`🔍 Encontradas ${apiKeysInactivas.length} API keys inactivas. Verificando...`);
         
         let reactivadas = 0;
         
         // Probar cada API key inactiva
         for (const keyData of apiKeysInactivas) {
             try {
-                console.log(`🧪 Probando API key ID ${keyData.id}...`);
                 
                 // Hacer una petición de prueba simple (obtener información de un video público)
                 const testUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=dQw4w9WgXcQ&key=${keyData.api_key}`;
@@ -161,7 +155,6 @@ async function reactivarApiKeysDeshabilitadas() {
                     );
                     
                     reactivadas++;
-                    console.log(`✅ API key ID ${keyData.id} reactivada exitosamente`);
                 } else {
                     console.log(`⚠️ API key ID ${keyData.id} aún tiene problemas`);
                 }
@@ -180,12 +173,10 @@ async function reactivarApiKeysDeshabilitadas() {
         }
         
         if (reactivadas > 0) {
-            console.log(`🎉 ${reactivadas} API keys reactivadas exitosamente`);
             
             // Recargar las API keys activas
             await cargarApiKeys();
             
-            console.log(`📊 Total de API keys activas ahora: ${apiKeys.length}`);
         } else {
             console.log('⏳ Ninguna API key pudo ser reactivada aún');
         }
@@ -202,20 +193,15 @@ function iniciarSistemaReintento() {
         clearInterval(intervalReintento);
     }
     
-    console.log('⏰ Sistema de reintento automático iniciado (cada 30 minutos)');
     
     // Configurar intervalo para ejecutar cada 30 minutos
     intervalReintento = setInterval(async () => {
-        console.log('\n🔄 [REINTENTO AUTOMÁTICO] Ejecutando reactivación de API keys...');
         await reactivarApiKeysDeshabilitadas();
-        console.log('🔄 [REINTENTO AUTOMÁTICO] Completado\n');
     }, INTERVALO_REINTENTO);
     
     // También ejecutar una vez inmediatamente (después de 2 minutos para dar tiempo al servidor)
     setTimeout(async () => {
-        console.log('\n🚀 [REINTENTO INICIAL] Ejecutando primera reactivación...');
         await reactivarApiKeysDeshabilitadas();
-        console.log('🚀 [REINTENTO INICIAL] Completado\n');
     }, 2 * 60 * 1000); // 2 minutos
 }
 
@@ -224,7 +210,6 @@ function detenerSistemaReintento() {
     if (intervalReintento) {
         clearInterval(intervalReintento);
         intervalReintento = null;
-        console.log('⏹️ Sistema de reintento automático detenido');
     }
 }
 
@@ -268,7 +253,6 @@ async function handleApiRequest(requestFn) {
                 if (lastKeyIndex === startingKeyIndex) {
                     keysTriedCount = maxRetries; // Forzar salida del bucle
                 } else {
-                    console.log(`🔄 Intentando con API key #${lastKeyIndex + 1}...`);
                     keysTriedCount++;
                     
                     // Esperar un poco entre intentos para evitar problemas de límite de tasa
@@ -289,7 +273,6 @@ async function handleApiRequest(requestFn) {
 
 // Función para verificar que las API keys sean válidas
 async function verificarApiKeys() {
-    console.log('🔑 Verificando API keys de YouTube...');
     
     // Asegurarse de cargar las claves más recientes de la base de datos
     await cargarApiKeys();
@@ -326,7 +309,6 @@ async function verificarApiKeys() {
                     await marcarApiKeyInactiva(apiKey, 'API key inválida');
                 }
             } else {
-                console.log(`✅ API key #${i+1} válida`);
                 keysValidas++;
             }
         } catch (err) {
@@ -344,7 +326,6 @@ async function verificarApiKeys() {
         console.error('❌ Ninguna API key es válida. Verifica tus claves API de YouTube.');
         return false;
     } else {
-        console.log(`✅ ${keysValidas} de ${apiKeys.length} API keys son válidas`);
         return true;
     }
 }
@@ -353,7 +334,6 @@ async function verificarApiKeys() {
 async function getVideoInfo(videoId) {
     // Si ya tenemos la información en caché y es para el mismo video, la devolvemos
     if (cachedVideoInfo && cachedVideoInfo.videoId === videoId) {
-        console.log('📋 Usando información de video en caché');
         return cachedVideoInfo.info;
     }
     
@@ -401,7 +381,6 @@ async function getVideoInfo(videoId) {
 async function getLiveChatId(videoId) {
     // Si ya tenemos el liveChatId en caché, lo devolvemos
     if (cachedLiveChatId) {
-        console.log('📋 Usando liveChatId en caché');
         return cachedLiveChatId;
     }
     

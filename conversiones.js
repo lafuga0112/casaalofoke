@@ -32,12 +32,10 @@ let fechaCargaTasas = null;
 // Función para cargar TODAS las tasas de conversión al inicio
 async function cargarTasasConversionAlInicio() {
     if (tasasCargadas) {
-        console.log('💰 Tasas de conversión ya están cargadas');
         return TASAS_CONVERSION_GLOBAL;
     }
     
     try {
-        console.log('🌐 Cargando TODAS las tasas de conversión al inicio del servidor...');
         
         // Intentar múltiples APIs gratuitas
         const apis = [
@@ -50,7 +48,6 @@ async function cargarTasasConversionAlInicio() {
         
         for (const apiUrl of apis) {
             try {
-                console.log(`🔄 Intentando API: ${apiUrl.split('/')[2]}`);
                 
                 const response = await axios.get(apiUrl, {
                     timeout: 15000 // 15 segundos timeout
@@ -58,11 +55,9 @@ async function cargarTasasConversionAlInicio() {
                 
                 if (response.data && response.data.rates) {
                     tasasOnline = response.data.rates;
-                    console.log(`✅ API exitosa: ${apiUrl.split('/')[2]} (${Object.keys(tasasOnline).length} monedas)`);
                     break;
                 }
             } catch (apiError) {
-                console.log(`⚠️ API falló: ${apiUrl.split('/')[2]} - ${apiError.message}`);
                 continue;
             }
         }
@@ -81,13 +76,9 @@ async function cargarTasasConversionAlInicio() {
             tasasCargadas = true;
             fechaCargaTasas = new Date();
             
-            console.log(`✅ TASAS DE CONVERSIÓN CARGADAS EXITOSAMENTE:`);
-            console.log(`📊 Total de monedas soportadas: ${Object.keys(TASAS_CONVERSION_GLOBAL).length}`);
-            console.log(`📅 Fecha de carga: ${fechaCargaTasas.toLocaleString()}`);
-            
+
             // Mostrar algunas monedas importantes
             const monedasImportantes = ['EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'BRL', 'MXN', 'NGN', 'DOP'];
-            console.log(`💱 Algunas tasas importantes:`);
             monedasImportantes.forEach(moneda => {
                 if (TASAS_CONVERSION_GLOBAL[moneda]) {
                     console.log(`   ${moneda}: ${TASAS_CONVERSION_GLOBAL[moneda].toFixed(6)} USD`);
@@ -102,15 +93,12 @@ async function cargarTasasConversionAlInicio() {
         
     } catch (error) {
         console.error('❌ Error cargando tasas online:', error.message);
-        console.log('🔄 Usando tasas de respaldo...');
         
         // En caso de error, usar tasas de respaldo
         TASAS_CONVERSION_GLOBAL = { ...TASAS_CONVERSION_RESPALDO };
         tasasCargadas = true;
         fechaCargaTasas = new Date();
         
-        console.log(`⚠️ USANDO TASAS DE RESPALDO:`);
-        console.log(`📊 Total de monedas disponibles: ${Object.keys(TASAS_CONVERSION_GLOBAL).length}`);
         
         return TASAS_CONVERSION_GLOBAL;
     }

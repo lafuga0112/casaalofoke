@@ -7,7 +7,6 @@ const config = require('./config');
 
 // Función para verificar que las API keys sean válidas
 async function verificarApiKeys() {
-    console.log('🔑 Verificando API keys de YouTube...');
     
     const apiKeys = config.youtube.apiKeys;
     if (!apiKeys || apiKeys.length === 0) {
@@ -15,7 +14,6 @@ async function verificarApiKeys() {
         return;
     }
     
-    console.log(`📋 Total de API keys configuradas: ${apiKeys.length}`);
     
     // Verificar cada API key
     let keysValidas = 0;
@@ -31,7 +29,6 @@ async function verificarApiKeys() {
                 key: apiKey
             });
             
-            console.log(`🔄 Verificando API key #${i+1}: ${apiKey.substring(0, 8)}...`);
             
             const res = await axios.get(url.toString());
             const data = res.data;
@@ -39,7 +36,6 @@ async function verificarApiKeys() {
             if (data.error) {
                 console.error(`❌ API key #${i+1} inválida: ${data.error.message}`);
             } else {
-                console.log(`✅ API key #${i+1} válida`);
                 keysValidas++;
             }
         } catch (err) {
