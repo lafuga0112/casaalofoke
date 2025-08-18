@@ -15,6 +15,32 @@ const { cargarTasasConversionAlInicio, convertirAUSD } = require('./conversiones
 // Importar el módulo de la API de YouTube
 const youtubeApi = require('./youtube-api');
 
+// Importar crypto para generar hashes
+const crypto = require('crypto');
+
+// Función para generar hash único del SuperChat
+function generarHashSuperChat(author, mensaje, montoOriginal, moneda, timestamp) {
+    const dataString = `${author}|${mensaje || ''}|${montoOriginal}|${moneda}|${timestamp}`;
+    return crypto.createHash('md5').update(dataString).digest('hex');
+}
+
+// Función para verificar si el SuperChat ya fue procesado
+function yaFueProcesado(hash) {
+    return superchatsProcessed.has(hash);
+}
+
+// Función para marcar SuperChat como procesado
+function marcarComoProcesado(hash) {
+    // Si el cache está lleno, eliminar el más antiguo
+    if (superchatsProcessed.size >= MAX_CACHE_SIZE) {
+        const firstHash = superchatsProcessed.values().next().value;
+        superchatsProcessed.delete(firstHash);
+    }
+    
+    superchatsProcessed.add(hash);
+    console.log(`💾 SuperChat marcado como procesado. Cache: ${superchatsProcessed.size}/${MAX_CACHE_SIZE}`);
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -30,6 +56,10 @@ let isMonitoringActive = false;
 let clientesConectados = 0;
 let diaActualReality = 1; // Día por defecto
 let tituloVideoActual = "";
+
+// Cache en memoria para evitar duplicados de SuperChats
+const superchatsProcessed = new Set(); // Almacena hashes de SuperChats ya procesados
+const MAX_CACHE_SIZE = 1000; // Máximo 1000 SuperChats en cache
 
 // WebSocket connections
 io.on('connection', (socket) => {
@@ -130,19 +160,24 @@ async function obtenerHistorialSuperChats(filtros = {}) {
         // Procesar los datos para el frontend
         const superchatsProcessed = superchats.map(sc => {
             let concursantesDetectados = [];
-            try {
-                // Intentar parsear como JSON, si falla asumir que es un array simple
-                if (sc.concursantes_detectados) {
-                    if (sc.concursantes_detectados.startsWith('[') || sc.concursantes_detectados.startsWith('{')) {
+            
+            // MySQL con tipo JSON devuelve directamente arrays de JavaScript
+            if (sc.concursantes_detectados) {
+                if (Array.isArray(sc.concursantes_detectados)) {
+                    // Ya es un array, usar directamente
+                    concursantesDetectados = sc.concursantes_detectados;
+                } else if (typeof sc.concursantes_detectados === 'string') {
+                    // Si por alguna razón es string, intentar parsear
+                    try {
                         concursantesDetectados = JSON.parse(sc.concursantes_detectados);
-                    } else {
-                        // Si no es JSON, asumir que es un string simple y convertirlo a array
+                    } catch (error) {
+                        // Si no es JSON válido, tratarlo como string simple
                         concursantesDetectados = [sc.concursantes_detectados];
                     }
+                } else {
+                    console.warn('⚠️ Tipo inesperado para concursantes_detectados:', typeof sc.concursantes_detectados);
+                    concursantesDetectados = [];
                 }
-            } catch (error) {
-                console.error('❌ Error parseando concursantes_detectados:', sc.concursantes_detectados, error.message);
-                concursantesDetectados = [];
             }
             
             return {
@@ -610,7 +645,20 @@ async function iniciarMonitorSuperChats() {
                         const moneda = sc.currency || "";
                         const msg = sc.userComment || "";
                         
-                        console.log(`💸 SuperChat de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
+                        // Generar hash único para este SuperChat
+                        const timestamp = snippet.publishedAt || new Date().toISOString();
+                        const superChatHash = generarHashSuperChat(author, msg, montoOriginal, moneda, timestamp);
+                        
+                        // Verificar si ya fue procesado
+                        if (yaFueProcesado(superChatHash)) {
+                            console.log(`🔄 SuperChat duplicado ignorado: ${author} - $${montoOriginal} ${moneda}`);
+                            continue; // Saltar este SuperChat
+                        }
+                        
+                        // Marcar como procesado INMEDIATAMENTE para evitar duplicados en el mismo poll
+                        marcarComoProcesado(superChatHash);
+                        
+                        console.log(`💸 SuperChat NUEVO de ${author}: ${montoOriginal} ${moneda} - "${msg}"`);
                         
                         const concursantes = detectarConcursantes(msg);
                         
