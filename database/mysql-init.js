@@ -102,7 +102,6 @@ async function createSugerenciasKeywordsTable() {
     
     try {
         await pool.query(createTableSQL);
-        console.log('✅ Tabla sugerencias_keywords creada correctamente');
     } catch (error) {
         console.error('❌ Error creando tabla sugerencias_keywords:', error.message);
         throw error;
@@ -133,10 +132,7 @@ async function initializeDatabase() {
         // Crear tablas
         await pool.query(createConcursantesTable);
         await pool.query(createApiKeysTable);
-        await createChatAprendizajeTable();
-        await createSugerenciasKeywordsTable();
         
-        console.log('✅ Tablas creadas exitosamente');
         
         // Verificar si ya existen claves API en la tabla
         const [apiKeys] = await pool.query('SELECT COUNT(*) as count FROM api_keys');

@@ -674,9 +674,9 @@
             if (concursantes.length === 10) {
                 // Verificar si no se asignaron puntos por monto muy bajo
                 if (distribucion && distribucion.includes("mínimo $10 requerido")) {
-                    text = `Todos los participantes (0 pts - monto insuficiente)`;
+                    text = `🎯 Todos los participantes<br><span class="points-info">⚠️ Sin puntos (monto insuficiente < $10)</span>`;
                 } else {
-                    text = `Todos los participantes (${puntosDistribuidos} pts c/u)`;
+                    text = `🎯 Todos los participantes<br><span class="points-info">✅ ${puntosDistribuidos} puntos cada uno</span>`;
                 }
             } else {
                 // Para concursantes específicos, mostrar progresión de puntos
@@ -713,12 +713,25 @@
             const superChatElement = document.createElement('div');
             superChatElement.className = 'superchat-item';
             
-            const timeString = new Date(superChatData.timestamp).toLocaleTimeString('es-DO', {
+            // Formatear tiempo más informativo
+            const timestamp = new Date(superChatData.timestamp);
+            const now = new Date();
+            const isToday = timestamp.toDateString() === now.toDateString();
+            
+            const timeString = timestamp.toLocaleTimeString('es-DO', {
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: true
+                hour12: false // 24 horas para más claridad
             });
+            
+            const dateString = isToday ? '' : timestamp.toLocaleDateString('es-DO', {
+                day: '2-digit',
+                month: '2-digit'
+            });
+            
+            const timeAgo = formatTimeAgo(superChatData.timestamp);
+            const fullTimeString = dateString ? `${dateString} ${timeString}` : timeString;
             
             // Obtener tier de color
             const tierClass = getTierClass(superChatData.amount);
@@ -732,22 +745,38 @@
             );
             const contestantsClass = superChatData.contestants && superChatData.contestants.length === 10 ? 'sin-clasificar' : '';
             
-            // Mostrar conversión de moneda si es diferente
-            const conversionText = (superChatData.originalAmount && superChatData.originalCurrency && superChatData.originalCurrency !== 'USD') ?
-                `<div class="superchat-conversion">${superChatData.originalAmount} ${superChatData.originalCurrency} → $${superChatData.amount} USD</div>` : '';
+            // Formatear monto con conversión más elegante
+            const originalCurrencyText = (superChatData.originalAmount && superChatData.originalCurrency && superChatData.originalCurrency !== 'USD') 
+                ? ` (${superChatData.originalAmount} ${superChatData.originalCurrency})` : '';
+            
+            const amountText = `💸 $${superChatData.amount} USD${originalCurrencyText}`;
+            
+            // Mensaje con mejor formato
+            const messageText = superChatData.message ? 
+                `<div class="superchat-message">"${superChatData.message}"</div>` : 
+                '<div class="superchat-message no-message">💬 Sin mensaje</div>';
             
             superChatElement.innerHTML = `
                 <div class="superchat-header">
-                    <div class="superchat-author">${superChatData.author}</div>
-                    <div class="superchat-amount ${tierClass}">
-                        $${superChatData.amount}
-                        ${conversionText}
+                    <div class="superchat-amount-info">
+                        <span class="superchat-amount ${tierClass}">${amountText}</span>
+                    </div>
+                    <div class="superchat-author-info">
+                        <span class="superchat-author">👤 ${superChatData.author}</span>
                     </div>
                 </div>
-                                    <div class="superchat-message">${superChatData.message || 'Sin mensaje'}</div>
+                
+                ${messageText}
+                
+                <div class="superchat-points ${contestantsClass}">
+                    ${contestantsText}
+                </div>
+                
                 <div class="superchat-footer">
-                    <div class="superchat-contestants ${contestantsClass}">${contestantsText}</div>
-                    <div class="superchat-time">${timeString}</div>
+                    <div class="superchat-time">
+                        <span class="time-exact">🕒 ${fullTimeString}</span>
+                        <span class="time-ago">${timeAgo}</span>
+                    </div>
                 </div>
             `;
             

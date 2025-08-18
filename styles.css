@@ -2939,3 +2939,139 @@ input:checked + .slider:before {
     }
 }
 
+/* Estilos mejorados para SuperChats más informativos */
+.superchat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    gap: 15px;
+}
+
+.superchat-amount-info {
+    flex: 1;
+}
+
+.superchat-author-info {
+    flex: 1;
+    text-align: right;
+}
+
+.superchat-amount {
+    font-weight: 700;
+    font-size: 1rem;
+    display: inline-block;
+    line-height: 1.2;
+}
+
+.superchat-author {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.2;
+}
+
+.superchat-message {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    border-left: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.superchat-message.no-message {
+    background: rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+    border-left-color: rgba(255, 255, 255, 0.1);
+}
+
+.superchat-points {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid rgba(0, 255, 0, 0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0;
+}
+
+.superchat-points .contestants-text {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+}
+
+.superchat-points.sin-clasificar {
+    background: rgba(255, 165, 0, 0.1);
+    border-color: rgba(255, 165, 0, 0.2);
+}
+
+.superchat-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.superchat-time {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    font-size: 0.8rem;
+}
+
+.time-exact {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+}
+
+.time-ago {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+/* Mejorar el formato de progresión de puntos */
+.contestants-images {
+    margin-bottom: 8px;
+}
+
+.contestants-text br {
+    margin: 4px 0;
+}
+
+.points-info {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Responsive para SuperChats informativos */
+@media (max-width: 768px) {
+    .superchat-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .superchat-author-info {
+        text-align: left;
+    }
+    
+    .superchat-amount {
+        font-size: 0.9rem;
+    }
+    
+    .superchat-message {
+        font-size: 0.9rem;
+        padding: 8px 10px;
+    }
+    
+    .superchat-points {
+        padding: 8px 10px;
+    }
+    
+    .superchat-time {
+        align-items: flex-start;
+    }
+}
+
