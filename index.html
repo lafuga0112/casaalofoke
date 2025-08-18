@@ -501,6 +501,10 @@
 
         // Función para generar HTML de imágenes de concursantes
         function generateContestantImages(concursantes) {
+            if (!concursantes || !Array.isArray(concursantes)) {
+                return '<div class="contestants-images"></div>';
+            }
+            
             if (concursantes.includes("SIN CLASIFICAR")) {
                 // Para "SIN CLASIFICAR", mostrar todas las imágenes en miniatura
                 const allImages = Object.keys(contestantImages).map(name => {
@@ -524,6 +528,10 @@
 
         // Función para formatear texto de concursantes con imágenes
         function formatContestantsText(concursantes, puntosDistribuidos, distribucion) {
+            if (!concursantes || !Array.isArray(concursantes)) {
+                return '<div class="contestants-text">Sin información de concursantes</div>';
+            }
+            
             const images = generateContestantImages(concursantes);
             
             let text = '';
@@ -565,25 +573,25 @@
             });
             
             // Obtener tier de color
-            const tierClass = getTierClass(superChatData.montoUSD);
+            const tierClass = getTierClass(superChatData.amount);
             
             // Formatear texto de concursantes
-            const contestantsText = formatContestantsText(superChatData.concursantes, superChatData.puntosDistribuidos, superChatData.distribucion);
-            const contestantsClass = superChatData.concursantes.includes("SIN CLASIFICAR") ? 'sin-clasificar' : '';
+            const contestantsText = formatContestantsText(superChatData.contestants, superChatData.puntosDistribuidos, superChatData.distribucion);
+            const contestantsClass = superChatData.contestants && superChatData.contestants.includes("SIN CLASIFICAR") ? 'sin-clasificar' : '';
             
             // Mostrar conversión de moneda si es diferente
-            const conversionText = (superChatData.montoOriginal && superChatData.moneda && superChatData.moneda !== 'USD') ?
-                `<div class="superchat-conversion">${superChatData.montoOriginal} ${superChatData.moneda} → $${superChatData.montoUSD} USD</div>` : '';
+            const conversionText = (superChatData.originalAmount && superChatData.originalCurrency && superChatData.originalCurrency !== 'USD') ?
+                `<div class="superchat-conversion">${superChatData.originalAmount} ${superChatData.originalCurrency} → $${superChatData.amount} USD</div>` : '';
             
             superChatElement.innerHTML = `
                 <div class="superchat-header">
-                    <div class="superchat-author">${superChatData.autor}</div>
+                    <div class="superchat-author">${superChatData.author}</div>
                     <div class="superchat-amount ${tierClass}">
-                        $${superChatData.montoUSD}
+                        $${superChatData.amount}
                         ${conversionText}
                     </div>
                 </div>
-                <div class="superchat-message">${superChatData.mensaje || 'Sin mensaje'}</div>
+                                    <div class="superchat-message">${superChatData.message || 'Sin mensaje'}</div>
                 <div class="superchat-footer">
                     <div class="superchat-contestants ${contestantsClass}">${contestantsText}</div>
                     <div class="superchat-time">${timeString}</div>
@@ -595,7 +603,7 @@
             
             // Actualizar estadísticas (aunque no se muestren, mantener la lógica)
             totalSuperChats++;
-            totalAmount += superChatData.montoUSD;
+            totalAmount += superChatData.amount;
             updateSuperChatStats();
             
             // Auto scroll si está activado
@@ -944,8 +952,8 @@
             socket.on('nuevo-superchat', (superChatData) => {
                 addSuperChat(superChatData);
                 // Animar concursantes que recibieron puntos si el mensaje incluye a alguien
-                if (superChatData.concursantes && superChatData.concursantes.length > 0) {
-                    animarConcursantesQueRecibieronPuntos(superChatData.concursantes);
+                if (superChatData.contestants && superChatData.contestants.length > 0) {
+                    animarConcursantesQueRecibieronPuntos(superChatData.contestants);
                 }
             });
         });
