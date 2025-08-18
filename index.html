@@ -670,24 +670,24 @@
             const images = generateContestantImages(concursantes);
             
             let text = '';
-                            // Si son 10 concursantes (todos), es un caso "SIN CLASIFICAR"
-                if (concursantes.length === 10) {
-                    // Verificar si no se asignaron puntos por monto muy bajo
-                    if (distribucion && distribucion.includes("mínimo $10 requerido")) {
-                        text = `Todos los participantes<br><span class="points-info">Sin puntos (monto insuficiente < $10)</span>`;
-                    } else {
-                        text = `Todos los participantes<br><span class="points-info">${puntosDistribuidos} puntos cada uno</span>`;
-                    }
+            // Si son 10 concursantes (todos), es un caso "SIN CLASIFICAR"
+            if (concursantes.length === 10) {
+                // Verificar si no se asignaron puntos por monto muy bajo
+                if (distribucion && distribucion.includes("mínimo $10 requerido")) {
+                    text = `Todos los participantes (0 pts - monto insuficiente)`;
                 } else {
+                    text = `Todos los participantes (${puntosDistribuidos} pts c/u)`;
+                }
+            } else {
                 // Para concursantes específicos, mostrar progresión de puntos
-                                    if (puntuacionesAnteriores && Object.keys(puntuacionesAnteriores).length > 0) {
-                        const participantesConProgresion = concursantes.map(nombre => {
-                            const puntosAnteriores = puntuacionesAnteriores[nombre] || 0;
-                            const puntosNuevos = puntosAnteriores + puntosDistribuidos;
-                            return `${nombre}: ${puntosAnteriores} + ${puntosDistribuidos} = ${puntosNuevos} pts`;
-                        });
-                        text = participantesConProgresion.join('<br>');
-                        text = text;
+                if (puntuacionesAnteriores && Object.keys(puntuacionesAnteriores).length > 0) {
+                    const participantesConProgresion = concursantes.map(nombre => {
+                        const puntosAnteriores = puntuacionesAnteriores[nombre] || 0;
+                        const puntosNuevos = puntosAnteriores + puntosDistribuidos;
+                        return `${nombre}: ${puntosAnteriores} + ${puntosDistribuidos} = ${puntosNuevos} pts`;
+                    });
+                    text = participantesConProgresion.join('<br>→ ');
+                    text = '→ ' + text;
                 } else {
                     // Fallback al formato anterior si no hay puntuaciones anteriores
                     const participantes = concursantes.join(', ');
@@ -713,19 +713,12 @@
             const superChatElement = document.createElement('div');
             superChatElement.className = 'superchat-item';
             
-            // Formatear tiempo compacto
-            const timestamp = new Date(superChatData.timestamp);
-            const now = new Date();
-            const isToday = timestamp.toDateString() === now.toDateString();
-            
-            const timeString = timestamp.toLocaleTimeString('es-DO', {
+            const timeString = new Date(superChatData.timestamp).toLocaleTimeString('es-DO', {
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: false // Sin segundos para más compacto
+                second: '2-digit',
+                hour12: true
             });
-            
-            const compactTime = isToday ? timeString : 
-                `${timestamp.getDate().toString().padStart(2, '0')}/${(timestamp.getMonth() + 1).toString().padStart(2, '0')} ${timeString}`;
             
             // Obtener tier de color
             const tierClass = getTierClass(superChatData.amount);
@@ -739,24 +732,22 @@
             );
             const contestantsClass = superChatData.contestants && superChatData.contestants.length === 10 ? 'sin-clasificar' : '';
             
-            // Formatear monto compacto
-            const originalCurrencyText = (superChatData.originalAmount && superChatData.originalCurrency && superChatData.originalCurrency !== 'USD') 
-                ? ` (${superChatData.originalAmount} ${superChatData.originalCurrency})` : '';
-            
-            // Header compacto en una línea: Monto • Autor • Hora
-            const compactHeader = `$${superChatData.amount}${originalCurrencyText} • ${superChatData.author} • ${compactTime}`;
-            
-            // Mensaje solo si existe, sin caja separada
-            const messageText = superChatData.message ? 
-                `<div class="superchat-message">"${superChatData.message}"</div>` : '';
+            // Mostrar conversión de moneda si es diferente
+            const conversionText = (superChatData.originalAmount && superChatData.originalCurrency && superChatData.originalCurrency !== 'USD') ?
+                `<div class="superchat-conversion">${superChatData.originalAmount} ${superChatData.originalCurrency} → $${superChatData.amount} USD</div>` : '';
             
             superChatElement.innerHTML = `
-                <div class="superchat-header-compact ${tierClass}">
-                    ${compactHeader}
+                <div class="superchat-header">
+                    <div class="superchat-author">${superChatData.author}</div>
+                    <div class="superchat-amount ${tierClass}">
+                        $${superChatData.amount}
+                        ${conversionText}
+                    </div>
                 </div>
-                ${messageText}
-                <div class="superchat-points-compact ${contestantsClass}">
-                    ${contestantsText}
+                                    <div class="superchat-message">${superChatData.message || 'Sin mensaje'}</div>
+                <div class="superchat-footer">
+                    <div class="superchat-contestants ${contestantsClass}">${contestantsText}</div>
+                    <div class="superchat-time">${timeString}</div>
                 </div>
             `;
             
