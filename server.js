@@ -58,6 +58,8 @@ io.on('connection', (socket) => {
     });
     
     // Handler para solicitud de historial de SuperChats
+    // NOTA: Solo se muestran SuperChats donde el concursante recibió puntos reales (> 0)
+    // Los SuperChats "SIN CLASIFICAR" con monto < $10 no aparecen en el historial individual
     socket.on('get-superchats-history', async (data) => {
         try {
             const { contestant, limit = 50, page = 1 } = data;
@@ -73,7 +75,7 @@ io.on('connection', (socket) => {
             
             const offset = (page - 1) * limit;
             
-            // Consulta para obtener SuperChats del concursante
+            // Consulta para obtener SuperChats del concursante (solo donde recibió puntos reales)
             const query = `
                 SELECT 
                     s.id,
@@ -88,19 +90,21 @@ io.on('connection', (socket) => {
                     sp.points_assigned
                 FROM superchats s
                 INNER JOIN superchat_participants sp ON s.id = sp.superchat_id
-                WHERE sp.concursante_slug = ?
+                WHERE sp.concursante_slug = ? 
+                AND sp.points_assigned > 0
                 ORDER BY s.created_at DESC
                 LIMIT ? OFFSET ?
             `;
             
             const results = await db.query(query, [contestant, limit, offset]);
             
-            // Verificar si hay más páginas
+            // Verificar si hay más páginas (solo contar SuperChats con puntos reales)
             const countQuery = `
                 SELECT COUNT(*) as total
                 FROM superchats s
                 INNER JOIN superchat_participants sp ON s.id = sp.superchat_id
-                WHERE sp.concursante_slug = ?
+                WHERE sp.concursante_slug = ? 
+                AND sp.points_assigned > 0
             `;
             
             const countResult = await db.query(countQuery, [contestant]);

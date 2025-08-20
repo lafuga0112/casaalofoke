@@ -907,19 +907,19 @@
                 historyList.innerHTML = '';
             }
             
-            if (!data || data.length === 0) {
-                if (isFirstPage) {
-                    historyList.innerHTML = `
-                        <div class="no-history">
-                            <div class="no-history-icon">📝</div>
-                            <div class="no-history-text">No hay SuperChats registrados</div>
-                            <div class="no-history-subtext">Los SuperChats aparecerán aquí cuando se reciban</div>
-                        </div>
-                    `;
+                            if (!data || data.length === 0) {
+                    if (isFirstPage) {
+                        historyList.innerHTML = `
+                            <div class="no-history">
+                                <div class="no-history-icon">📝</div>
+                                <div class="no-history-text">No hay SuperChats asignados</div>
+                                <div class="no-history-subtext">Solo se muestran SuperChats donde este concursante recibió puntos</div>
+                            </div>
+                        `;
+                    }
+                    loadMoreBtn.style.display = 'none';
+                    return;
                 }
-                loadMoreBtn.style.display = 'none';
-                return;
-            }
             
             data.forEach(item => {
                 const historyItem = document.createElement('div');

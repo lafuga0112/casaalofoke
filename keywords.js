@@ -25,7 +25,8 @@ const CONCURSANTES = {
       "team giusepe",
       "#teamgiusepe",
       'Trujilo',
-      'truji llo'
+      'truji llo',
+      "Tejillo"
     ]
   },
   JIMENEZ: {
@@ -43,7 +44,11 @@ const CONCURSANTES = {
       "jiménez va a ganar",
       "jiménez y",
       "jiménez,",
-      "jiménez &"
+      "jiménez",
+      'jimenes',
+      'Jiméne',
+      'jimene'
+
     ]
   },
   CRUSITA: {
@@ -65,7 +70,9 @@ const CONCURSANTES = {
       'Cruzita',
       'CRUCITAAAA',
       'Crucita',
-      'Crisita'
+      'Crisita',
+      'C R U S I T A',
+      'Crisista'
     ]
   },
   LUISE: {
@@ -201,7 +208,8 @@ const CONCURSANTES = {
       "peky y",
       "peky,",
       "peky &",
-      'peki'
+      'peki',
+      'Pekí'
     ]
   }
 };
