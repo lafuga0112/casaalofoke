@@ -57,6 +57,75 @@ io.on('connection', (socket) => {
         enviarPuntuacionesACliente(socket);
     });
     
+    // Handler para solicitud de historial de SuperChats
+    socket.on('get-superchats-history', async (data) => {
+        try {
+            const { contestant, limit = 50, page = 1 } = data;
+            
+            if (!contestant) {
+                socket.emit('superchats-history', {
+                    success: false,
+                    error: 'Contestant es requerido',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+            
+            const offset = (page - 1) * limit;
+            
+            // Consulta para obtener SuperChats del concursante
+            const query = `
+                SELECT 
+                    s.id,
+                    s.author,
+                    s.message,
+                    s.original_amount,
+                    s.original_currency,
+                    s.amount_usd,
+                    s.distribucion_text,
+                    s.is_sin_clasificar,
+                    s.created_at,
+                    sp.points_assigned
+                FROM superchats s
+                INNER JOIN superchat_participants sp ON s.id = sp.superchat_id
+                WHERE sp.concursante_slug = ?
+                ORDER BY s.created_at DESC
+                LIMIT ? OFFSET ?
+            `;
+            
+            const results = await db.query(query, [contestant, limit, offset]);
+            
+            // Verificar si hay más páginas
+            const countQuery = `
+                SELECT COUNT(*) as total
+                FROM superchats s
+                INNER JOIN superchat_participants sp ON s.id = sp.superchat_id
+                WHERE sp.concursante_slug = ?
+            `;
+            
+            const countResult = await db.query(countQuery, [contestant]);
+            const total = countResult[0].total;
+            const hasMore = (offset + limit) < total;
+            
+            socket.emit('superchats-history', {
+                success: true,
+                data: results,
+                hasMore: hasMore,
+                total: total,
+                page: page,
+                limit: limit,
+                timestamp: new Date().toISOString()
+            });
+            
+        } catch (err) {
+            console.error('❌ Error obteniendo historial de SuperChats:', err.message);
+            socket.emit('superchats-history', {
+                success: false,
+                error: err.message,
+                timestamp: new Date().toISOString()
+            });
+        }
+    });
 
 });
 
@@ -333,6 +402,56 @@ async function enviarPuntuacionesACliente(socket) {
     }
 }
 
+// Función para guardar SuperChat en la base de datos
+async function guardarSuperChatEnDB(superChatData) {
+    try {
+        // Insertar el SuperChat principal
+        const superChatResult = await db.query(
+            `INSERT INTO superchats (
+                author, message, original_amount, original_currency, 
+                amount_usd, distribucion_text, is_sin_clasificar, video_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                superChatData.author,
+                superChatData.message,
+                superChatData.originalAmount,
+                superChatData.originalCurrency,
+                superChatData.amount,
+                superChatData.distribucion,
+                superChatData.contestants.includes("SIN CLASIFICAR"),
+                config.youtube.videoId
+            ]
+        );
+        
+        const superChatId = superChatResult.insertId;
+        
+        // Insertar las relaciones con los concursantes
+        for (const contestant of superChatData.contestants) {
+            // Obtener el slug del concursante
+            const contestantResult = await db.query(
+                'SELECT slug FROM concursantes WHERE nombre = ?',
+                [contestant]
+            );
+            
+            if (contestantResult.length > 0) {
+                const slug = contestantResult[0].slug;
+                await db.query(
+                    `INSERT INTO superchat_participants (
+                        superchat_id, concursante_slug, points_assigned
+                    ) VALUES (?, ?, ?)`,
+                    [superChatId, slug, superChatData.pointsPerContestant]
+                );
+            }
+        }
+        
+        console.log(`✅ SuperChat guardado en DB - ID: ${superChatId}, Autor: ${superChatData.author}`);
+        
+    } catch (err) {
+        console.error('❌ Error guardando SuperChat en DB:', err.message);
+        // No lanzar error para no interrumpir el flujo principal
+    }
+}
+
 // Función para enviar puntuaciones actualizadas a todos los clientes
 async function enviarPuntuacionesActualizadas() {
     try {
@@ -551,6 +670,9 @@ async function iniciarMonitorSuperChats() {
                             
                             // Enviar a todos los clientes conectados
                             io.emit('nuevo-superchat', superChatParaEnviar);
+                            
+                            // Guardar SuperChat en la base de datos
+                            await guardarSuperChatEnDB(superChatParaEnviar);
                             
                             // Enviar puntuaciones actualizadas
                             enviarPuntuacionesActualizadas();

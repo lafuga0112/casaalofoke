@@ -166,7 +166,7 @@
                 <div class="legend-content">
                     <div class="legend-item">
                         <span class="legend-label">Contabilización desde:</span>
-                        <span class="legend-value">17 de Agosto, 2025 - 1:30 AM</span>
+                        <span class="legend-value">20 de Agosto, 2025 - 11:53 AM</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-label">Última actualización:</span>
@@ -378,6 +378,25 @@
             <span class="creator-name">MrFugaRD</span>
         </div>
     </footer>
+
+    <!-- Modal de Historial de SuperChats -->
+    <div class="contestant-history-modal" id="history-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Historial de SuperChats - <span id="modal-contestant-name">GIGI</span></h3>
+                <button class="modal-close" onclick="closeHistoryModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-list" id="history-list">
+                    <!-- Los SuperChats se renderizan aquí -->
+                </div>
+                <div class="modal-footer">
+                    <button class="instagram-btn" onclick="openInstagram()">Ver Instagram</button>
+                    <button class="load-more-btn" id="load-more-btn" onclick="loadMoreHistory()" style="display: none;">Cargar más</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Socket.IO Client -->
     <script src="/socket.io/socket.io.js"></script>
@@ -808,14 +827,143 @@
             luise: 'https://www.instagram.com/luisemartinezz12/' // Ejemplo - ajustar con el real
         };
 
-        // Función para abrir Instagram del concursante
+        // Variables para el modal de historial
+        let currentContestant = null;
+        let currentPage = 1;
+        let hasMoreHistory = false;
+        let isLoadingHistory = false;
+
+        // Función para abrir el historial del concursante
         function openContestantProfile(contestantId) {
-            const instagramUrl = instagramLinks[contestantId];
-            if (instagramUrl) {
-                window.open(instagramUrl, '_blank');
-            } else {
-                alert('Instagram del concursante no disponible aún');
+            currentContestant = contestantId;
+            currentPage = 1;
+            hasMoreHistory = false;
+            
+            // Actualizar nombre en el modal
+            const contestantName = document.querySelector(`[onclick="openContestantProfile('${contestantId}')"]`).closest('.contestant-card, .position-item').querySelector('.contestant-name, .position-name').textContent;
+            document.getElementById('modal-contestant-name').textContent = contestantName;
+            
+            // Mostrar modal
+            document.getElementById('history-modal').style.display = 'flex';
+            
+            // Cargar historial
+            loadContestantHistory();
+        }
+
+        // Función para cerrar el modal
+        function closeHistoryModal() {
+            document.getElementById('history-modal').style.display = 'none';
+            currentContestant = null;
+            currentPage = 1;
+            hasMoreHistory = false;
+        }
+
+        // Función para cargar historial del concursante
+        function loadContestantHistory() {
+            if (!currentContestant || isLoadingHistory) return;
+            
+            isLoadingHistory = true;
+            
+            // Mostrar loading
+            const historyList = document.getElementById('history-list');
+            if (currentPage === 1) {
+                historyList.innerHTML = '<div class="loading-indicator">Cargando historial...</div>';
             }
+            
+            // Solicitar historial via WebSocket
+            socket.emit('get-superchats-history', {
+                contestant: currentContestant,
+                limit: 20,
+                page: currentPage
+            });
+        }
+
+        // Función para cargar más historial
+        function loadMoreHistory() {
+            if (hasMoreHistory && !isLoadingHistory) {
+                currentPage++;
+                loadContestantHistory();
+            }
+        }
+
+        // Función para abrir Instagram
+        function openInstagram() {
+            if (currentContestant) {
+                const instagramUrl = instagramLinks[currentContestant];
+                if (instagramUrl) {
+                    window.open(instagramUrl, '_blank');
+                } else {
+                    alert('Instagram del concursante no disponible aún');
+                }
+            }
+        }
+
+        // Función para renderizar la lista de historial
+        function renderHistoryList(data, isFirstPage = false) {
+            const historyList = document.getElementById('history-list');
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            
+            if (isFirstPage) {
+                historyList.innerHTML = '';
+            }
+            
+            if (!data || data.length === 0) {
+                if (isFirstPage) {
+                    historyList.innerHTML = `
+                        <div class="no-history">
+                            <div class="no-history-icon">📝</div>
+                            <div class="no-history-text">No hay SuperChats registrados</div>
+                            <div class="no-history-subtext">Los SuperChats aparecerán aquí cuando se reciban</div>
+                        </div>
+                    `;
+                }
+                loadMoreBtn.style.display = 'none';
+                return;
+            }
+            
+            data.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                // Formatear fecha
+                const date = new Date(item.created_at);
+                const timeString = date.toLocaleTimeString('es-DO', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                const dateString = date.toLocaleDateString('es-DO', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                
+                // Obtener tier de color
+                const tierClass = getTierClass(item.amount_usd);
+                
+                // Mostrar conversión si es diferente
+                const conversionText = (item.original_currency && item.original_currency !== 'USD') ?
+                    `${item.original_amount} ${item.original_currency} → $${item.amount_usd} USD` : '';
+                
+                historyItem.innerHTML = `
+                    <div class="history-item-header">
+                        <div class="history-author">${item.author}</div>
+                        <div class="history-amount ${tierClass}">$${item.amount_usd}</div>
+                    </div>
+                    <div class="history-message">${item.message || 'Sin mensaje'}</div>
+                    <div class="history-details">
+                        ${conversionText ? `<div class="history-conversion">${conversionText}</div>` : ''}
+                        <div class="history-time">${dateString} - ${timeString}</div>
+                        <div class="history-points">+${item.points_assigned} pts</div>
+                    </div>
+                `;
+                
+                historyList.appendChild(historyItem);
+            });
+            
+            // Mostrar/ocultar botón "Cargar más"
+            loadMoreBtn.style.display = hasMoreHistory ? 'block' : 'none';
         }
 
         // Función para detectar cambios de posición y aplicar animaciones
@@ -1125,6 +1273,20 @@
             startStatusUpdater();
             updateMonitorStatus(); // Actualizar estado inicial
 
+            // Event listener para cerrar modal con ESC
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeHistoryModal();
+                }
+            });
+
+            // Event listener para cerrar modal haciendo click fuera
+            document.getElementById('history-modal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeHistoryModal();
+                }
+            });
+
 
 
             // Escuchar mensajes de SuperChats en tiempo real
@@ -1133,6 +1295,26 @@
                 // Animar concursantes que recibieron puntos si el mensaje incluye a alguien
                 if (superChatData.contestants && superChatData.contestants.length > 0) {
                     animarConcursantesQueRecibieronPuntos(superChatData.contestants);
+                }
+            });
+
+            // Escuchar respuesta del historial de SuperChats
+            socket.on('superchats-history', (response) => {
+                isLoadingHistory = false;
+                
+                if (response.success) {
+                    hasMoreHistory = response.hasMore;
+                    renderHistoryList(response.data, response.page === 1);
+                } else {
+                    console.error('❌ Error obteniendo historial:', response.error);
+                    const historyList = document.getElementById('history-list');
+                    historyList.innerHTML = `
+                        <div class="no-history">
+                            <div class="no-history-icon">❌</div>
+                            <div class="no-history-text">Error al cargar historial</div>
+                            <div class="no-history-subtext">${response.error}</div>
+                        </div>
+                    `;
                 }
             });
         });

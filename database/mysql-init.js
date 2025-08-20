@@ -40,6 +40,37 @@ CREATE TABLE IF NOT EXISTS api_keys (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
 
+const createSuperChatsTable = `
+CREATE TABLE IF NOT EXISTS superchats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    author VARCHAR(100) NOT NULL,
+    message TEXT,
+    original_amount DECIMAL(10,2) NOT NULL,
+    original_currency VARCHAR(10) NOT NULL,
+    amount_usd DECIMAL(10,2) NOT NULL,
+    distribucion_text VARCHAR(255) NOT NULL,
+    is_sin_clasificar BOOLEAN DEFAULT FALSE,
+    video_id VARCHAR(20) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_created_at (created_at),
+    INDEX idx_video_id (video_id),
+    INDEX idx_author (author)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
+
+const createSuperChatParticipantsTable = `
+CREATE TABLE IF NOT EXISTS superchat_participants (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    superchat_id INT NOT NULL,
+    concursante_slug VARCHAR(50) NOT NULL,
+    points_assigned INT NOT NULL DEFAULT 0,
+    
+    FOREIGN KEY (superchat_id) REFERENCES superchats(id) ON DELETE CASCADE,
+    INDEX idx_superchat (superchat_id),
+    INDEX idx_participant_superchat (concursante_slug, superchat_id),
+    INDEX idx_participant_points (concursante_slug, points_assigned)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
+
 // Configurar la base de datos para usar UTF-8mb4
 const setDatabaseCharset = `
 ALTER DATABASE ${config.database.database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
@@ -132,6 +163,8 @@ async function initializeDatabase() {
         // Crear tablas
         await pool.query(createConcursantesTable);
         await pool.query(createApiKeysTable);
+        await pool.query(createSuperChatsTable);
+        await pool.query(createSuperChatParticipantsTable);
         
         
         // Verificar si ya existen claves API en la tabla
