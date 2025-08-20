@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
 const createSuperChatsTable = `
 CREATE TABLE IF NOT EXISTS superchats (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    youtube_message_id VARCHAR(100) UNIQUE NOT NULL,
     author VARCHAR(100) NOT NULL,
     message TEXT,
     original_amount DECIMAL(10,2) NOT NULL,
@@ -55,7 +56,8 @@ CREATE TABLE IF NOT EXISTS superchats (
     
     INDEX idx_created_at (created_at),
     INDEX idx_video_id (video_id),
-    INDEX idx_author (author)
+    INDEX idx_author (author),
+    INDEX idx_youtube_message_id (youtube_message_id)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
 
 const createSuperChatParticipantsTable = `

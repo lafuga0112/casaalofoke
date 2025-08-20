@@ -405,13 +405,25 @@ async function enviarPuntuacionesACliente(socket) {
 // Función para guardar SuperChat en la base de datos
 async function guardarSuperChatEnDB(superChatData) {
     try {
+        // Verificar si el SuperChat ya existe usando el ID de YouTube
+        const existingSuperChat = await db.query(
+            'SELECT id FROM superchats WHERE youtube_message_id = ?',
+            [superChatData.youtubeMessageId]
+        );
+        
+        if (existingSuperChat.length > 0) {
+            console.log(`⚠️ SuperChat ya existe en DB - YouTube ID: ${superChatData.youtubeMessageId}, Autor: ${superChatData.author}`);
+            return; // No procesar duplicados
+        }
+        
         // Insertar el SuperChat principal
         const superChatResult = await db.query(
             `INSERT INTO superchats (
-                author, message, original_amount, original_currency, 
+                youtube_message_id, author, message, original_amount, original_currency, 
                 amount_usd, distribucion_text, is_sin_clasificar, video_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
+                superChatData.youtubeMessageId,
                 superChatData.author,
                 superChatData.message,
                 superChatData.originalAmount,
@@ -444,7 +456,7 @@ async function guardarSuperChatEnDB(superChatData) {
             }
         }
         
-        console.log(`✅ SuperChat guardado en DB - ID: ${superChatId}, Autor: ${superChatData.author}`);
+        console.log(`✅ SuperChat guardado en DB - ID: ${superChatId}, YouTube ID: ${superChatData.youtubeMessageId}, Autor: ${superChatData.author}`);
         
     } catch (err) {
         console.error('❌ Error guardando SuperChat en DB:', err.message);
@@ -604,6 +616,7 @@ async function iniciarMonitorSuperChats() {
                 for (const item of data.items || []) {
                     const author = item.authorDetails?.displayName || "Desconocido";
                     const snippet = item.snippet;
+                    const youtubeMessageId = item.id; // ID único del mensaje de YouTube
 
                     if (snippet?.superChatDetails) {
                         const sc = snippet.superChatDetails;
@@ -655,6 +668,7 @@ async function iniciarMonitorSuperChats() {
                             // Crear objeto para enviar al frontend
                             const superChatParaEnviar = {
                                 id: Date.now(),
+                                youtubeMessageId: youtubeMessageId, // ID único de YouTube
                                 author: author,
                                 message: msg,
                                 amount: montoUSD,
