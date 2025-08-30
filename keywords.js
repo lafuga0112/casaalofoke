@@ -232,11 +232,21 @@ const CONCURSANTES = {
       "carlos,",
       "carlos &",
       "saltamonte",
+      "salta monte",
+      "salta montes",
+      "saltamontes",
+      "salt monte",
+      "pequeño saltamonte",
+      "pequeño salta monte",
+      "pequeño salta montes",
+      "team saltamonte",
+      "team salta monte",
+      "team salta montes",
       "TeamCarlos",
       "Montequie",
-      "team saltamonte",
+      "montequie",
       "vamos saltamonte",
-      "montequie"
+      "vamos salta monte"
     ]
   }
 };
