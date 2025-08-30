@@ -32,6 +32,7 @@ const CONCURSANTES = {
   JIMENEZ: {
     nombre: "JIMENEZ", 
     puntos: 0,
+    eliminado: true,
     keywords: [
       "team jimenez",
       "#teamjimenez",
@@ -122,6 +123,7 @@ const CONCURSANTES = {
   PAMELA: {
     nombre: "PAMELA",
     puntos: 0,
+    eliminado: true,
     keywords: [
       "team pamela",
       "#teampamela",
@@ -162,6 +164,7 @@ const CONCURSANTES = {
       "team vlady",
       "#teamvlady",
       "vlady",
+      "Vlady",
       "voy a vlady",
       "vamos vlady",
       "team vlady 💙",
@@ -182,6 +185,7 @@ const CONCURSANTES = {
       "team karola",
       "#teamkarola",
       "karola",
+      "carola",
       "voy a karola",
       "vamos karola",
       "team karola 💜",
@@ -197,6 +201,7 @@ const CONCURSANTES = {
   PEKY: {
     nombre: "PEKY",
     puntos: 0,
+    eliminado: true,
     keywords: [
       "team peky",
       "#teampeky",
@@ -210,6 +215,28 @@ const CONCURSANTES = {
       "peky &",
       'peki',
       'Pekí'
+    ]
+  },
+  CARLOS: {
+    nombre: "CARLOS",
+    puntos: 0,
+    keywords: [
+      "team carlos",
+      "#teamcarlos",
+      "carlos",
+      "voy a carlos",
+      "vamos carlos",
+      "team carlos 🦗",
+      "carlos va a ganar",
+      "carlos y",
+      "carlos,",
+      "carlos &",
+      "saltamonte",
+      "TeamCarlos",
+      "Montequie",
+      "team saltamonte",
+      "vamos saltamonte",
+      "montequie"
     ]
   }
 };

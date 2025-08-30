@@ -11,6 +11,7 @@ const db = require('./database/mysql-init');
 // Importar funciones del monitor de Super Chats
 const { CONCURSANTES } = require('./keywords.js');
 const { cargarTasasConversionAlInicio, convertirAUSD } = require('./conversiones.js');
+const { detectarConcursantesInteligente } = require('./intelligent-detection.js');
 
 // Importar el módulo de la API de YouTube
 const youtubeApi = require('./youtube-api');
@@ -139,52 +140,67 @@ io.on('connection', (socket) => {
 // convertirAUSD ahora se importa desde conversiones.js
 
 function detectarConcursantes(mensaje) {
-    const mensajeLower = mensaje.toLowerCase();
-    const concursantesDetectados = [];
+    console.log(`\n🧠 === DETECCIÓN INTELIGENTE ===`);
+    console.log(`📝 Mensaje original: "${mensaje}"`);
     
+    // Usar el nuevo sistema de detección inteligente
+    const resultado = detectarConcursantesInteligente(mensaje);
     
-    for (const [key, concursante] of Object.entries(CONCURSANTES)) {
-        for (const keyword of concursante.keywords) {
-            const keywordLower = keyword.toLowerCase();
-            if (mensajeLower.includes(keywordLower)) {
-                if (!concursantesDetectados.includes(concursante.nombre)) {
-                    concursantesDetectados.push(concursante.nombre);
-                }
-                break;
-            }
-        }
-    }
+    console.log(`🎯 Resultado final: ${resultado.join(', ')}`);
+    console.log(`🧠 === FIN DETECCIÓN ===\n`);
     
-    
-    if (concursantesDetectados.length === 0) {
-        return ["SIN CLASIFICAR"];
-    }
-    
-    return concursantesDetectados;
+    return resultado;
 }
 
 async function distribuirPuntos(concursantes, puntosUSD) {
     try {
         if (concursantes.includes("SIN CLASIFICAR")) {
-            // Si no llega a $10, no se distribuye nada
-            if (puntosUSD < 10) {
-                return `SuperChat de $${puntosUSD} muy pequeño para distribuir entre todos los participantes (mínimo $10 requerido)`;
+            // Contar solo participantes activos (no eliminados)
+            const participantesActivos = Object.values(CONCURSANTES).filter(c => !c.eliminado);
+            const numeroParticipantesActivos = participantesActivos.length;
+            
+            // NUEVA LÓGICA: Comparar el monto USD con el número de participantes activos
+            if (puntosUSD < numeroParticipantesActivos) {
+                // CASO 1: Monto menor que número de participantes → SUMAR TODO AL FONDO COMÚN
+                // Crear o actualizar un "fondo común" en la base de datos
+                try {
+                    // Intentar crear el registro del fondo común si no existe
+                    await db.query(
+                        `INSERT INTO concursantes (nombre, slug, puntos_reales, eliminado) 
+                         VALUES ('FONDO_COMUN', 'fondo_comun', ?, FALSE) 
+                         ON DUPLICATE KEY UPDATE 
+                         puntos_reales = puntos_reales + ?, 
+                         updated_at = NOW()`,
+                        [puntosUSD, puntosUSD]
+                    );
+                } catch (err) {
+                    console.error('❌ Error manejando fondo común:', err.message);
+                }
+                
+                return `SuperChat de $${puntosUSD} agregado al fondo común (monto menor que ${numeroParticipantesActivos} participantes)`;
+                
+            } else {
+                // CASO 2: Monto mayor o igual que número de participantes → DIVIDIR ENTRE TODOS
+                const puntosPorConcursante = Math.floor(puntosUSD / numeroParticipantesActivos);
+                
+                // Actualizar solo los concursantes activos (no eliminados)
+                for (const [key, concursante] of Object.entries(CONCURSANTES)) {
+                    // Saltar participantes eliminados
+                    if (concursante.eliminado) {
+                        continue;
+                    }
+                    
+                    await db.query(
+                        `UPDATE concursantes 
+                        SET puntos_reales = puntos_reales + ?,
+                            updated_at = NOW()
+                        WHERE nombre = ?`,
+                        [puntosPorConcursante, concursante.nombre]
+                    );
+                }
+                
+                return `Distribuido entre los ${numeroParticipantesActivos} participantes activos (${puntosPorConcursante} puntos cada uno)`;
             }
-            
-            const puntosPorConcursante = Math.floor(puntosUSD / 10);
-            
-            // Actualizar todos los concursantes
-            for (const [key, concursante] of Object.entries(CONCURSANTES)) {
-                await db.query(
-                    `UPDATE concursantes 
-                    SET puntos_reales = puntos_reales + ?,
-                        updated_at = NOW()
-                    WHERE nombre = ?`,
-                    [puntosPorConcursante, concursante.nombre]
-                );
-            }
-            
-            return `Distribuido entre los 10 concursantes (${puntosPorConcursante} puntos cada uno)`;
             
         } else {
             const puntosPorConcursante = Math.round(puntosUSD / concursantes.length);
@@ -408,17 +424,10 @@ async function enviarPuntuacionesACliente(socket) {
 
 // Función para guardar SuperChat en la base de datos
 async function guardarSuperChatEnDB(superChatData) {
+    console.log(`🔄 [DB] Guardando SuperChat (ya verificado como nuevo) - YouTube ID: ${superChatData.youtubeMessageId}, Autor: ${superChatData.author}`);
+    
     try {
-        // Verificar si el SuperChat ya existe usando el ID de YouTube
-        const existingSuperChat = await db.query(
-            'SELECT id FROM superchats WHERE youtube_message_id = ?',
-            [superChatData.youtubeMessageId]
-        );
-        
-        if (existingSuperChat.length > 0) {
-            console.log(`⚠️ SuperChat ya existe en DB - YouTube ID: ${superChatData.youtubeMessageId}, Autor: ${superChatData.author}`);
-            return; // No procesar duplicados
-        }
+        // Ya no necesitamos verificar duplicados - se hace antes en el monitor
         
         // Insertar el SuperChat principal
         const superChatResult = await db.query(
@@ -460,10 +469,14 @@ async function guardarSuperChatEnDB(superChatData) {
             }
         }
         
-        console.log(`✅ SuperChat guardado en DB - ID: ${superChatId}, YouTube ID: ${superChatData.youtubeMessageId}, Autor: ${superChatData.author}`);
+        console.log(`✅ [DB] SuperChat guardado exitosamente - ID: ${superChatId}, YouTube ID: ${superChatData.youtubeMessageId}, Autor: ${superChatData.author}`);
         
     } catch (err) {
-        console.error('❌ Error guardando SuperChat en DB:', err.message);
+        if (err.message.includes('Duplicate entry') && err.message.includes('youtube_message_id')) {
+            console.log(`⚠️ [DB] SuperChat ya existe (race condition detectado) - YouTube ID: ${superChatData.youtubeMessageId}, Autor: ${superChatData.author}`);
+        } else {
+            console.error('❌ [DB] Error guardando SuperChat:', err.message);
+        }
         // No lanzar error para no interrumpir el flujo principal
     }
 }
@@ -477,9 +490,19 @@ async function enviarPuntuacionesActualizadas() {
                 slug,
                 puntos_reales,
                 instagram_url,
+                eliminado,
                 @rownum := @rownum + 1 as posicion
             FROM concursantes, (SELECT @rownum := 0) r
-            ORDER BY puntos_reales DESC
+            ORDER BY 
+                eliminado ASC, 
+                CASE 
+                    WHEN eliminado = 0 THEN puntos_reales 
+                    ELSE 0 
+                END DESC,
+                CASE 
+                    WHEN eliminado = 1 THEN nombre 
+                    ELSE '' 
+                END ASC
         `;
         
         const rows = await db.query(query);
@@ -623,6 +646,21 @@ async function iniciarMonitorSuperChats() {
                     const youtubeMessageId = item.id; // ID único del mensaje de YouTube
 
                     if (snippet?.superChatDetails) {
+                        console.log(`📥 [MONITOR] Procesando SuperChat - YouTube ID: ${youtubeMessageId}, Autor: ${author}`);
+                        
+                        // 🚀 OPTIMIZACIÓN: Verificar duplicados PRIMERO antes de procesamiento pesado
+                        const existingSuperChat = await db.query(
+                            'SELECT id FROM superchats WHERE youtube_message_id = ?',
+                            [youtubeMessageId]
+                        );
+                        
+                        if (existingSuperChat.length > 0) {
+                            console.log(`⚠️ [MONITOR] SuperChat ya existe - saltando procesamiento completo - YouTube ID: ${youtubeMessageId}, Autor: ${author}`);
+                            continue; // Saltar al siguiente mensaje sin procesar nada más
+                        }
+                        
+                        console.log(`✨ [MONITOR] SuperChat nuevo - procediendo con procesamiento completo`);
+                        
                         const sc = snippet.superChatDetails;
                         const montoOriginal = Number(sc.amountMicros || 0) / 1_000_000;
                         const moneda = sc.currency || "";
@@ -639,17 +677,21 @@ async function iniciarMonitorSuperChats() {
                             let contestantsParaEnviar = [];
                             
                             if (concursantes.includes("SIN CLASIFICAR")) {
+                                // Contar solo participantes activos (no eliminados)
+                                const participantesActivos = Object.values(CONCURSANTES).filter(c => !c.eliminado);
+                                const numeroParticipantesActivos = participantesActivos.length;
+                                
                                 if (montoUSD >= 10) {
-                                    puntosPorConcursante = Math.floor(montoUSD / 10);
-                                    // Para SIN CLASIFICAR, enviar todos los concursantes
-                                    contestantsParaEnviar = Object.values(CONCURSANTES).map(c => c.nombre);
+                                    puntosPorConcursante = Math.floor(montoUSD / numeroParticipantesActivos);
+                                    // Para SIN CLASIFICAR, enviar solo participantes activos
+                                    contestantsParaEnviar = participantesActivos.map(c => c.nombre);
                                 } else {
                                     puntosPorConcursante = 0;
-                                    contestantsParaEnviar = Object.values(CONCURSANTES).map(c => c.nombre);
+                                    contestantsParaEnviar = participantesActivos.map(c => c.nombre);
                                 }
                             } else {
                                 puntosPorConcursante = Math.round(montoUSD / concursantes.length);
-                                contestantsParaEnviar = concursantes;
+                                contestantsParaEnviar = concursantes; // Ya contiene solo el resultado final del sistema inteligente
                             }
                             
                             // Obtener puntuaciones actuales ANTES de distribuir (para mostrar progresión)

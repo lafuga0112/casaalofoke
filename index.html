@@ -104,12 +104,12 @@
                 </div>
 
                 <!-- Pamela -->
-                <div class="contestant-card" style="--card-index: 4;">
+                <div class="contestant-card eliminated" style="--card-index: 4;">
                     <div class="contestant-name">PAMELA</div>
                     <div class="contestant-photo">
                         <img src="images/pamela.jpg" alt="PAMELA" class="profile-img" onclick="openContestantProfile('pamela')">
                     </div>
-                    <div class="contestant-score" id="score-pamela">0PTS</div>
+                    <div class="contestant-score" id="score-pamela">ELIMINADO</div>
                 </div>
 
                 <!-- KAROLA -->
@@ -122,21 +122,21 @@
                 </div>
 
                 <!-- JIMENEZ -->
-                <div class="contestant-card" style="--card-index: 6;">
+                <div class="contestant-card eliminated" style="--card-index: 6;">
                     <div class="contestant-name">JIMENEZ</div>
                     <div class="contestant-photo">
                         <img src="images/JIMENEZ.jpg" alt="JIMENEZ" class="profile-img" onclick="openContestantProfile('jimenez')">
                     </div>
-                    <div class="contestant-score" id="score-jimenez">0PTS</div>
+                    <div class="contestant-score" id="score-jimenez">ELIMINADO</div>
                 </div>
 
                 <!-- LA PEKI -->
-                <div class="contestant-card" style="--card-index: 7;">
+                <div class="contestant-card eliminated" style="--card-index: 7;">
                     <div class="contestant-name">LA PEKI</div>
                     <div class="contestant-photo">
                         <img src="images/peki.jpg" alt="LA PEKI" class="profile-img" onclick="openContestantProfile('peki')">
                     </div>
-                    <div class="contestant-score" id="score-peky">0PTS</div>
+                    <div class="contestant-score" id="score-peky">ELIMINADO</div>
                 </div>
 
                 <!-- CRUSITA -->
@@ -155,6 +155,15 @@
                         <img src="images/luise.jpg" alt="LUISE" class="profile-img" onclick="openContestantProfile('luise')">
                     </div>
                     <div class="contestant-score" id="score-luise">0PTS</div>
+                </div>
+
+                <!-- CARLOS -->
+                <div class="contestant-card" style="--card-index: 10;">
+                    <div class="contestant-name">CARLOS</div>
+                    <div class="contestant-photo">
+                        <img src="images/carlos.png" alt="CARLOS" class="profile-img" onclick="openContestantProfile('carlos')">
+                    </div>
+                    <div class="contestant-score" id="score-carlos">0PTS</div>
                 </div>
             </div>
             
@@ -295,21 +304,9 @@
                         </div>
                     </div>
 
-                    <!-- PAMELA -->
-                    <div class="position-item" data-contestant="pamela">
-                        <div class="position-rank">5</div>
-                        <div class="position-avatar">
-                            <img src="images/pamela.jpg" alt="PAMELA" class="position-img" onclick="openContestantProfile('pamela')">
-                        </div>
-                        <div class="position-details">
-                            <div class="position-name">PAMELA</div>
-                            <div class="position-score" id="list-score-pamela">0 PTS</div>
-                        </div>
-                    </div>
-
                     <!-- KAROLA -->
                     <div class="position-item" data-contestant="karola">
-                        <div class="position-rank">6</div>
+                        <div class="position-rank">5</div>
                         <div class="position-avatar">
                             <img src="images/karola.jpg" alt="KAROLA" class="position-img" onclick="openContestantProfile('karola')">
                         </div>
@@ -319,33 +316,9 @@
                         </div>
                     </div>
 
-                    <!-- JIMENEZ -->
-                    <div class="position-item" data-contestant="jimenez">
-                        <div class="position-rank">7</div>
-                        <div class="position-avatar">
-                            <img src="images/JIMENEZ.jpg" alt="JIMENEZ" class="position-img" onclick="openContestantProfile('jimenez')">
-                        </div>
-                        <div class="position-details">
-                            <div class="position-name">JIMENEZ</div>
-                            <div class="position-score" id="list-score-jimenez">0 PTS</div>
-                        </div>
-                    </div>
-
-                    <!-- LA PEKI -->
-                    <div class="position-item" data-contestant="peky">
-                        <div class="position-rank">8</div>
-                        <div class="position-avatar">
-                            <img src="images/peki.jpg" alt="LA PEKI" class="position-img" onclick="openContestantProfile('peky')">
-                        </div>
-                        <div class="position-details">
-                            <div class="position-name">LA PEKI</div>
-                            <div class="position-score" id="list-score-peky">0 PTS</div>
-                        </div>
-                    </div>
-
                     <!-- CRUSITA -->
                     <div class="position-item" data-contestant="crusita">
-                        <div class="position-rank">9</div>
+                        <div class="position-rank">6</div>
                         <div class="position-avatar">
                             <img src="images/CRUSITA.jpg" alt="CRUSITA" class="position-img" onclick="openContestantProfile('crusita')">
                         </div>
@@ -357,13 +330,63 @@
 
                     <!-- LUISE -->
                     <div class="position-item" data-contestant="luise">
-                        <div class="position-rank">10</div>
+                        <div class="position-rank">7</div>
                         <div class="position-avatar">
                             <img src="images/luise.jpg" alt="LUISE" class="position-img" onclick="openContestantProfile('luise')">
                         </div>
                         <div class="position-details">
                             <div class="position-name">LUISE</div>
                             <div class="position-score" id="list-score-luise">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- CARLOS -->
+                    <div class="position-item" data-contestant="carlos">
+                        <div class="position-rank">8</div>
+                        <div class="position-avatar">
+                            <img src="images/carlos.png" alt="CARLOS" class="position-img" onclick="openContestantProfile('carlos')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">CARLOS</div>
+                            <div class="position-score" id="list-score-carlos">0 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- PARTICIPANTES ELIMINADOS AL FINAL -->
+                    
+                    <!-- PAMELA -->
+                    <div class="position-item eliminated" data-contestant="pamela">
+                        <div class="position-rank">X</div>
+                        <div class="position-avatar">
+                            <img src="images/pamela.jpg" alt="PAMELA" class="position-img" onclick="openContestantProfile('pamela')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">PAMELA</div>
+                            <div class="position-score" id="list-score-pamela">ELIMINADO</div>
+                        </div>
+                    </div>
+
+                    <!-- JIMENEZ -->
+                    <div class="position-item eliminated" data-contestant="jimenez">
+                        <div class="position-rank">X</div>
+                        <div class="position-avatar">
+                            <img src="images/JIMENEZ.jpg" alt="JIMENEZ" class="position-img" onclick="openContestantProfile('jimenez')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">JIMENEZ</div>
+                            <div class="position-score" id="list-score-jimenez">ELIMINADO</div>
+                        </div>
+                    </div>
+
+                    <!-- LA PEKI -->
+                    <div class="position-item eliminated" data-contestant="peky">
+                        <div class="position-rank">X</div>
+                        <div class="position-avatar">
+                            <img src="images/peki.jpg" alt="LA PEKI" class="position-img" onclick="openContestantProfile('peky')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">LA PEKI</div>
+                            <div class="position-score" id="list-score-peky">ELIMINADO</div>
                         </div>
                     </div>
                 </div>
@@ -650,7 +673,8 @@
             'JIMENEZ': 'images/JIMENEZ.jpg',
             'PEKY': 'images/peki.jpg',
             'CRUSITA': 'images/CRUSITA.jpg',
-            'LUISE': 'images/luise.jpg'
+            'LUISE': 'images/luise.jpg',
+            'CARLOS': 'images/carlos.png'
         };
 
         // Función para generar HTML de imágenes de concursantes
@@ -659,8 +683,8 @@
                 return '<div class="contestants-images"></div>';
             }
             
-            // Si son 10 concursantes (todos), mostrar todas las imágenes
-            if (concursantes.length === 10) {
+            // Si son 11 concursantes (todos), mostrar todas las imágenes
+            if (concursantes.length === 11) {
                 const allImages = concursantes.map(name => {
                     return `<img src="${contestantImages[name]}" alt="${name}" class="contestant-mini-img" title="${name}">`;
                 }).join('');
@@ -689,8 +713,8 @@
             const images = generateContestantImages(concursantes);
             
             let text = '';
-            // Si son 10 concursantes (todos), es un caso "SIN CLASIFICAR"
-            if (concursantes.length === 10) {
+            // Si son 11 concursantes (todos), es un caso "SIN CLASIFICAR"
+            if (concursantes.length === 11) {
                 // Verificar si no se asignaron puntos por monto muy bajo
                 if (distribucion && distribucion.includes("mínimo $10 requerido")) {
                     text = `Todos los participantes (0 pts - monto insuficiente)`;
@@ -824,7 +848,8 @@
             jimenez: 'https://www.instagram.com/jimenez_tv/', // Ejemplo - ajustar con el real
             peky: 'https://www.instagram.com/lapekipr/', // Ejemplo - ajustar con el real
             crusita: 'https://www.instagram.com/crusita___/', // Ejemplo - ajustar con el real
-            luise: 'https://www.instagram.com/luisemartinezz12/' // Ejemplo - ajustar con el real
+            luise: 'https://www.instagram.com/luisemartinezz12/', // Ejemplo - ajustar con el real
+            carlos: 'https://www.instagram.com/carlosuser/' // Ejemplo - ajustar con el real
         };
 
         // Variables para el modal de historial
@@ -1040,8 +1065,12 @@
             const container = document.querySelector('.contestants-grid');
             const cards = Array.from(container.children);
             
-            // Detectar cambios de posición ANTES del reordenamiento
-            const positionChanges = detectPositionChanges(concursantes);
+            // Separar participantes activos y eliminados
+            const participantesActivos = concursantes.filter(c => !c.eliminado);
+            const participantesEliminados = concursantes.filter(c => c.eliminado);
+            
+            // Detectar cambios de posición ANTES del reordenamiento (solo para activos)
+            const positionChanges = detectPositionChanges(participantesActivos);
             
             // Crear un mapa de las cards actuales por slug
             const cardMap = {};
@@ -1057,9 +1086,21 @@
             // Aplicar clase de reordenamiento
             container.classList.add('reordering');
             
-            // Reordenar según la nueva data
+            // Reordenar: primero activos por puntos, luego eliminados
             container.innerHTML = '';
-            concursantes.forEach(concursante => {
+            
+            // Agregar participantes activos ordenados por puntos
+            participantesActivos.forEach(concursante => {
+                const card = cardMap[concursante.slug];
+                if (card) {
+                    container.appendChild(card);
+                } else {
+                    console.warn(`No se encontró card para: ${concursante.slug}`);
+                }
+            });
+            
+            // Agregar participantes eliminados al final
+            participantesEliminados.forEach(concursante => {
                 const card = cardMap[concursante.slug];
                 if (card) {
                     container.appendChild(card);
@@ -1072,7 +1113,7 @@
             setTimeout(() => {
                 container.classList.remove('reordering');
                 
-                // Aplicar animaciones de cambio de posición
+                // Aplicar animaciones de cambio de posición (solo para activos)
                 if (positionChanges.length > 0) {
                     applyPositionAnimations(positionChanges);
                 }
@@ -1085,6 +1126,10 @@
             if (!positionsList) return;
 
             const positionItems = Array.from(positionsList.children);
+            
+            // Separar participantes activos y eliminados
+            const participantesActivos = concursantes.filter(c => !c.eliminado);
+            const participantesEliminados = concursantes.filter(c => c.eliminado);
             
             // Crear un mapa de los items por contestant
             const itemMap = {};
@@ -1100,10 +1145,12 @@
             
             // Reordenar y actualizar
             positionsList.innerHTML = '';
-            concursantes.forEach((concursante, index) => {
+            
+            // Primero agregar participantes activos con ranking normal
+            participantesActivos.forEach((concursante, index) => {
                 const item = itemMap[concursante.slug];
                 if (item) {
-                    // Actualizar ranking
+                    // Actualizar ranking (posición real en competencia)
                     const rankElement = item.querySelector('.position-rank');
                     if (rankElement) {
                         rankElement.textContent = index + 1;
@@ -1117,6 +1164,32 @@
                     
                     // Agregar índice para animación
                     item.style.setProperty('--item-index', index);
+                    
+                    positionsList.appendChild(item);
+                } else {
+                    console.warn(`No se encontró position item para: ${concursante.slug}`);
+                }
+            });
+            
+            // Luego agregar participantes eliminados al final (sin ranking numérico)
+            participantesEliminados.forEach((concursante, index) => {
+                const item = itemMap[concursante.slug];
+                if (item) {
+                    // Para eliminados, mostrar "X" en lugar de número
+                    const rankElement = item.querySelector('.position-rank');
+                    if (rankElement) {
+                        rankElement.textContent = 'X';
+                    }
+                    
+                    // Actualizar puntos a "ELIMINADO"
+                    const scoreElement = item.querySelector('.position-score');
+                    if (scoreElement) {
+                        scoreElement.textContent = 'ELIMINADO';
+                    }
+                    
+                    // Agregar índice para animación
+                    const totalIndex = participantesActivos.length + index;
+                    item.style.setProperty('--item-index', totalIndex);
                     
                     positionsList.appendChild(item);
                 } else {
@@ -1169,12 +1242,20 @@
         
         socket.on('puntuaciones-update', (data) => {
             if (data.success) {
+                // Lista de participantes eliminados
+                const eliminatedContestants = ['pamela', 'jimenez', 'peky'];
+                
                 // Actualizar tabla principal (vista puntuaciones)
                 reorderContestants(data.data);
                 data.data.forEach((concursante) => {
                     const scoreElement = document.getElementById(`score-${concursante.slug}`);
                     if (scoreElement) {
-                        scoreElement.textContent = `${Math.round(concursante.puntos_reales)}PTS`;
+                        // Si el participante está eliminado, mantener "ELIMINADO"
+                        if (eliminatedContestants.includes(concursante.slug)) {
+                            scoreElement.textContent = 'ELIMINADO';
+                        } else {
+                            scoreElement.textContent = `${Math.round(concursante.puntos_reales)}PTS`;
+                        }
                     }
                 });
                 

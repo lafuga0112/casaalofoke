@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS concursantes (
     puntos_mostrados INT DEFAULT 0,
     posicion INT DEFAULT 0,
     instagram_url VARCHAR(255),
+    eliminado BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
@@ -168,6 +169,20 @@ async function initializeDatabase() {
         await pool.query(createSuperChatsTable);
         await pool.query(createSuperChatParticipantsTable);
         
+        // Agregar columna 'eliminado' si no existe (para bases de datos existentes)
+        try {
+            await pool.query(`
+                ALTER TABLE concursantes 
+                ADD COLUMN IF NOT EXISTS eliminado BOOLEAN DEFAULT FALSE
+            `);
+            console.log('✅ Columna eliminado verificada/agregada a la tabla concursantes');
+        } catch (err) {
+            // Si el error es que la columna ya existe, lo ignoramos
+            if (!err.message.includes('Duplicate column name')) {
+                console.warn('⚠️ Advertencia al agregar columna eliminado:', err.message);
+            }
+        }
+        
         
         // Verificar si ya existen claves API en la tabla
         const [apiKeys] = await pool.query('SELECT COUNT(*) as count FROM api_keys');
@@ -186,15 +201,23 @@ async function initializeDatabase() {
             'JIMENEZ': 'https://www.instagram.com/jimenez_tv/',
             'PEKY': 'https://www.instagram.com/lapekipr/',
             'CRUSITA': 'https://www.instagram.com/crusita___/',
-            'LUISE': 'https://www.instagram.com/luisemartinezz12/'
+            'LUISE': 'https://www.instagram.com/luisemartinezz12/',
+            'CARLOS': 'https://www.instagram.com/carlosmontesquieu/' // Actualizar con el Instagram real
         };
         
         // Insertar o actualizar cada concursante
         for (const [key, concursante] of Object.entries(CONCURSANTES)) {
             try {
                 await pool.query(
-                    'INSERT INTO concursantes (nombre, slug, instagram_url) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE instagram_url = ?',
-                    [concursante.nombre, concursante.nombre.toLowerCase(), instagramUrls[concursante.nombre] || '', instagramUrls[concursante.nombre] || '']
+                    'INSERT INTO concursantes (nombre, slug, instagram_url, eliminado) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE instagram_url = ?, eliminado = ?',
+                    [
+                        concursante.nombre, 
+                        concursante.nombre.toLowerCase(), 
+                        instagramUrls[concursante.nombre] || '', 
+                        concursante.eliminado || false,
+                        instagramUrls[concursante.nombre] || '',
+                        concursante.eliminado || false
+                    ]
                 );
             } catch (err) {
                 console.error(`❌ Error insertando concursante ${concursante.nombre}:`, err.message);
