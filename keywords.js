@@ -160,6 +160,7 @@ const CONCURSANTES = {
   VLADY: {
     nombre: "VLADY",
     puntos: 0,
+    eliminado: true,
     keywords: [
       "team vlady",
       "#teamvlady",

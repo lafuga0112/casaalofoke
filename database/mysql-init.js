@@ -142,6 +142,35 @@ async function createSugerenciasKeywordsTable() {
     }
 }
 
+async function createColaPuntosTable() {
+    const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS cola_puntos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            puntos_acumulados DECIMAL(10,2) DEFAULT 0,
+            numero_participantes_objetivo INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            
+            INDEX idx_participantes (numero_participantes_objetivo),
+            INDEX idx_created (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+    
+    try {
+        await pool.query(createTableSQL);
+        
+        // Insertar registro inicial con 7 participantes activos
+        await pool.query(`
+            INSERT IGNORE INTO cola_puntos (puntos_acumulados, numero_participantes_objetivo) 
+            VALUES (0, 7)
+        `);
+        
+    } catch (error) {
+        console.error('❌ Error creando tabla cola_puntos:', error.message);
+        throw error;
+    }
+}
+
 
 
 // Inicializar la base de datos
@@ -168,6 +197,11 @@ async function initializeDatabase() {
         await pool.query(createApiKeysTable);
         await pool.query(createSuperChatsTable);
         await pool.query(createSuperChatParticipantsTable);
+        
+        // Crear tablas adicionales
+        await createChatAprendizajeTable();
+        await createSugerenciasKeywordsTable();
+        await createColaPuntosTable();
         
         // Agregar columna 'eliminado' si no existe (para bases de datos existentes)
         try {

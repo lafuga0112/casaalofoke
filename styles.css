@@ -2379,26 +2379,45 @@ input:checked + .slider:before {
     }
     
     .position-item {
-        padding: 6px;
-        gap: 8px;
+        padding: 8px;
+        gap: 10px;
+        flex-wrap: nowrap;
+        min-height: 50px;
+        align-items: center;
     }
     
     .position-img {
-        width: 30px;
-        height: 30px;
+        width: 35px;
+        height: 35px;
+        flex-shrink: 0;
     }
     
     .position-name {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
+        line-height: 1.2;
+        font-weight: 600;
     }
     
     .position-score {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
     }
     
     .position-rank {
         font-size: 0.9rem;
-        min-width: 20px;
+        min-width: 22px;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+    
+    .position-details {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
     }
     
     .positions-header h2 {

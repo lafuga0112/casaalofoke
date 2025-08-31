@@ -159,25 +159,64 @@ async function distribuirPuntos(concursantes, puntosUSD) {
             const participantesActivos = Object.values(CONCURSANTES).filter(c => !c.eliminado);
             const numeroParticipantesActivos = participantesActivos.length;
             
-            // NUEVA LÓGICA: Comparar el monto USD con el número de participantes activos
+            // NUEVA LÓGICA: Sistema de cola inteligente
             if (puntosUSD < numeroParticipantesActivos) {
-                // CASO 1: Monto menor que número de participantes → SUMAR TODO AL FONDO COMÚN
-                // Crear o actualizar un "fondo común" en la base de datos
+                // CASO 1: Monto menor que número de participantes → AGREGAR A LA COLA
                 try {
-                    // Intentar crear el registro del fondo común si no existe
+                    // Agregar puntos a la cola
                     await db.query(
-                        `INSERT INTO concursantes (nombre, slug, puntos_reales, eliminado) 
-                         VALUES ('FONDO_COMUN', 'fondo_comun', ?, FALSE) 
-                         ON DUPLICATE KEY UPDATE 
-                         puntos_reales = puntos_reales + ?, 
-                         updated_at = NOW()`,
-                        [puntosUSD, puntosUSD]
+                        `UPDATE cola_puntos 
+                         SET puntos_acumulados = puntos_acumulados + ?, 
+                             updated_at = NOW() 
+                         WHERE numero_participantes_objetivo = ?`,
+                        [puntosUSD, numeroParticipantesActivos]
                     );
+                    
+                    // Verificar si ya podemos distribuir
+                    const [colaResult] = await db.query(
+                        'SELECT puntos_acumulados FROM cola_puntos WHERE numero_participantes_objetivo = ?',
+                        [numeroParticipantesActivos]
+                    );
+                    
+                    const puntosAcumulados = colaResult[0]?.puntos_acumulados || 0;
+                    
+                    if (puntosAcumulados >= numeroParticipantesActivos) {
+                        // ¡Ya podemos distribuir!
+                        const puntosPorConcursante = Math.floor(puntosAcumulados / numeroParticipantesActivos);
+                        const puntosUsados = puntosPorConcursante * numeroParticipantesActivos;
+                        const puntosRestantes = puntosAcumulados - puntosUsados;
+                        
+                        // Distribuir puntos a participantes activos
+                        for (const [key, concursante] of Object.entries(CONCURSANTES)) {
+                            if (concursante.eliminado) continue;
+                            
+                            await db.query(
+                                `UPDATE concursantes 
+                                SET puntos_reales = puntos_reales + ?,
+                                    updated_at = NOW()
+                                WHERE nombre = ?`,
+                                [puntosPorConcursante, concursante.nombre]
+                            );
+                        }
+                        
+                        // Actualizar cola con puntos restantes
+                        await db.query(
+                            `UPDATE cola_puntos 
+                             SET puntos_acumulados = ?, 
+                                 updated_at = NOW() 
+                             WHERE numero_participantes_objetivo = ?`,
+                            [puntosRestantes, numeroParticipantesActivos]
+                        );
+                        
+                        return `🎉 Cola completada! Distribuido: ${puntosPorConcursante} pts c/u (${puntosUsados} de ${puntosAcumulados}). Restantes en cola: $${puntosRestantes}`;
+                    } else {
+                        return `SuperChat de $${puntosUSD} agregado a la cola. Total acumulado: $${puntosAcumulados} (faltan $${numeroParticipantesActivos - puntosAcumulados} para distribuir)`;
+                    }
+                    
                 } catch (err) {
-                    console.error('❌ Error manejando fondo común:', err.message);
+                    console.error('❌ Error manejando cola de puntos:', err.message);
+                    return `Error procesando cola de puntos`;
                 }
-                
-                return `SuperChat de $${puntosUSD} agregado al fondo común (monto menor que ${numeroParticipantesActivos} participantes)`;
                 
             } else {
                 // CASO 2: Monto mayor o igual que número de participantes → DIVIDIR ENTRE TODOS
