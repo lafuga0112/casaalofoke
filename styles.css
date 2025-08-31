@@ -865,14 +865,27 @@ body::after {
         padding: 20px 0;
     }
     
+    /* Grid responsive para vista principal de puntuaciones */
     .contestants-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        justify-items: center;
+    }
+    
+    /* Anular las reglas específicas de columnas para móvil */
+    .contestant-card:nth-child(1),
+    .contestant-card:nth-child(2),
+    .contestant-card:nth-child(3),
+    .contestant-card:nth-child(4),
+    .contestant-card:nth-child(5) {
+        grid-column: auto;
     }
     
     .contestant-card {
         min-height: 200px;
         padding: 18px 12px;
+        width: 100%;
+        max-width: 300px;
     }
     
     .profile-img {
@@ -1057,15 +1070,28 @@ body::after {
         border-radius: 20px;
     }
     
+    /* Grid responsive para móviles pequeños */
     .contestants-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 15px;
+        justify-items: center;
+    }
+    
+    /* Anular reglas específicas para móvil pequeño */
+    .contestant-card:nth-child(1),
+    .contestant-card:nth-child(2),
+    .contestant-card:nth-child(3),
+    .contestant-card:nth-child(4),
+    .contestant-card:nth-child(5) {
+        grid-column: auto;
     }
     
     .contestant-card {
         padding: 15px 10px;
         min-height: 180px;
         border-radius: 15px;
+        width: 100%;
+        max-width: 280px;
     }
     
     .profile-img {
@@ -1323,13 +1349,27 @@ body::after {
 
 /* Optimización para pantallas muy pequeñas */
 @media (max-width: 360px) {
+    /* Grid responsive para móviles muy pequeños */
     .contestants-grid {
+        grid-template-columns: 1fr;
         gap: 12px;
+        justify-items: center;
+    }
+    
+    /* Anular reglas específicas para móvil muy pequeño */
+    .contestant-card:nth-child(1),
+    .contestant-card:nth-child(2),
+    .contestant-card:nth-child(3),
+    .contestant-card:nth-child(4),
+    .contestant-card:nth-child(5) {
+        grid-column: auto;
     }
     
     .contestant-card {
         padding: 12px 8px;
         min-height: 160px;
+        width: 100%;
+        max-width: 320px;
     }
     
     .profile-img {
