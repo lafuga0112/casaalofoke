@@ -86,12 +86,12 @@
                 </div>
 
                 <!-- VLADY -->
-                <div class="contestant-card" style="--card-index: 2;">
+                <div class="contestant-card eliminated" style="--card-index: 2;">
                     <div class="contestant-name">VLADY</div>
                     <div class="contestant-photo">
                         <img src="images/vlady.jpg" alt="VLADY" class="profile-img" onclick="openContestantProfile('vlady')">
                     </div>
-                    <div class="contestant-score" id="score-vlady">0PTS</div>
+                    <div class="contestant-score" id="score-vlady">ELIMINADO</div>
                 </div>
 
                 <!-- CRAZY -->
@@ -295,18 +295,6 @@
                         </div>
                     </div>
 
-                    <!-- VLADY -->
-                    <div class="position-item" data-contestant="vlady">
-                        <div class="position-rank">3</div>
-                        <div class="position-avatar">
-                            <img src="images/vlady.jpg" alt="VLADY" class="position-img" onclick="openContestantProfile('vlady')">
-                        </div>
-                        <div class="position-details">
-                            <div class="position-name">VLADY</div>
-                            <div class="position-score" id="list-score-vlady">0 PTS</div>
-                        </div>
-                    </div>
-
                     <!-- CRAZY -->
                     <div class="position-item" data-contestant="crazy">
                         <div class="position-rank">4</div>
@@ -402,6 +390,18 @@
                         <div class="position-details">
                             <div class="position-name">LA PEKI</div>
                             <div class="position-score" id="list-score-peky">ELIMINADO</div>
+                        </div>
+                    </div>
+
+                    <!-- VLADY -->
+                    <div class="position-item eliminated" data-contestant="vlady">
+                        <div class="position-rank">X</div>
+                        <div class="position-avatar">
+                            <img src="images/vlady.jpg" alt="VLADY" class="position-img" onclick="openContestantProfile('vlady')">
+                        </div>
+                        <div class="position-details">
+                            <div class="position-name">VLADY</div>
+                            <div class="position-score" id="list-score-vlady">ELIMINADO</div>
                         </div>
                     </div>
                 </div>
@@ -1258,7 +1258,7 @@
         socket.on('puntuaciones-update', (data) => {
             if (data.success) {
                 // Lista de participantes eliminados
-                const eliminatedContestants = ['pamela', 'jimenez', 'peky'];
+                const eliminatedContestants = ['pamela', 'jimenez', 'peky', 'vlady'];
                 
                 // Actualizar tabla principal (vista puntuaciones)
                 reorderContestants(data.data);
